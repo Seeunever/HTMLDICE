@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#030806">
+  <meta name="description" content="克苏鲁的呼唤 · 血色推理之宴 · 在线投骰与调查员人物卡">
+  <title>血色推理之宴</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="cthulhu.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23030806' stroke='%23c9a227' stroke-width='1'/%3E%3Cellipse cx='16' cy='17' rx='4' ry='5' fill='%236fcf97'/%3E%3Ccircle cx='16' cy='17' r='1.5' fill='%23030806'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="cosmos" aria-hidden="true">
+    <div class="cosmos__nebula"></div>
+    <div class="cosmos__fog"></div>
+    <div class="cosmos__stars"></div>
+    <div class="cosmos__tentacles">
+      <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M80 220 C60 160 90 100 70 40 C65 20 55 10 40 0"/>
+        <path d="M180 220 C150 150 200 90 160 30 C150 10 130 0 110 0"/>
+        <path d="M300 220 C280 140 320 80 290 20 C280 5 260 0 240 0"/>
+        <path d="M420 220 C400 160 440 70 400 10 C385 0 365 0 350 0"/>
+        <path d="M540 220 C520 130 560 60 530 0 C515 -5 495 0 480 0"/>
+        <path d="M660 220 C640 150 680 80 650 25 C635 5 615 0 600 0"/>
+        <path d="M760 220 C740 170 780 100 750 35 C735 10 715 0 700 0"/>
+      </svg>
+    </div>
+    <div class="cosmos__vignette"></div>
+  </div>
+
+  <div id="card" class="card">
+    <header class="site-header">
+      <svg class="site-emblem" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.5"/>
+        <path d="M32 8 C20 18 12 32 14 48 C16 56 24 58 32 58 C40 58 48 56 50 48 C52 32 44 18 32 8" stroke="currentColor" stroke-width="1" fill="none" opacity="0.6"/>
+        <path d="M8 38 Q20 28 32 32 Q44 36 56 38" stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.35"/>
+        <path d="M10 48 Q22 40 32 42 Q42 44 54 48" stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.3"/>
+        <ellipse class="eye" cx="32" cy="34" rx="7" ry="9"/>
+        <circle cx="32" cy="34" r="2.5" fill="#030806"/>
+      </svg>
+      <h1>血色推理之宴</h1>
+      <p class="site-tagline">Ph'nglui mglw'nafh · 理智在深渊中摇曳</p>
+    </header>
+
+    <div id="authPanel" class="auth-panel">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-mode="login">登录</button>
+        <button type="button" class="auth-tab" data-mode="register">注册</button>
+      </div>
+      <input id="usernameInput" class="auth-input" type="text" maxlength="20" placeholder="请输入用户名" autocomplete="username">
+      <button id="authSubmitBtn" type="button">登录</button>
+      <p id="authError" class="auth-error"></p>
+    </div>
+
+    <div id="appPanel" class="hidden">
+      <div class="user-bar">
+        <span>欢迎，<strong id="usernameDisplay"></strong><span id="roleBadge"></span></span>
+        <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
+        <button id="charBtn" type="button" class="btn-small">人物卡</button>
+        <button id="logoutBtn" type="button" class="btn-small">退出</button>
+      </div>
+      <div class="context-row">
+        <div class="map-section">
+          <label class="map-section-label" for="mapSelect">地图</label>
+          <div class="map-select-wrap">
+            <select id="mapSelect" class="map-select" aria-label="选择地图地点">
+              <option value="">选择地点…</option>
+              <option value="hotel">酒店</option>
+              <option value="dais">戴斯家</option>
+              <option value="hospital">医院</option>
+              <option value="police">警察局</option>
+              <option value="church">教堂</option>
+              <option value="bar">酒吧</option>
+            </select>
+          </div>
+        </div>
+        <div class="npc-section">
+          <label class="map-section-label" for="npcSelect">NPC</label>
+          <div class="map-select-wrap">
+            <select id="npcSelect" class="map-select" aria-label="选择 NPC">
+              <option value="">选择 NPC…</option>
+              <option value="dais">戴斯</option>
+              <option value="kaling">卡灵珊</option>
+              <option value="priest">神父</option>
+            </select>
+          </div>
+        </div>
+        <div class="pc-section">
+          <label class="map-section-label" for="pcSelect">PC</label>
+          <div class="map-select-wrap">
+            <select id="pcSelect" class="map-select" aria-label="选择调查员 PC">
+              <option value="">选择 PC…</option>
+              <option value="莉莉娅">莉莉娅</option>
+              <option value="特朗狗">特朗狗</option>
+              <option value="奥八嘎">奥八嘎</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="investigatorBanner" class="investigator-banner hidden">
+        <button type="button" id="investigatorPortraitBtn" class="investigator-banner__portrait" aria-label="查看调查员肖像">
+          <img id="investigatorPortraitImg" src="" alt="">
+          <span class="investigator-banner__ring" aria-hidden="true"></span>
+        </button>
+        <div class="investigator-banner__body">
+          <div id="investigatorName" class="investigator-banner__name"></div>
+          <div id="investigatorOcc" class="investigator-banner__occ"></div>
+          <div class="investigator-banner__hint">点击肖像放大 · 调查员档案</div>
+        </div>
+      </div>
+      <div id="results" class="results placeholder">选择骰子、技能或属性进行检定</div>
+      <div class="skill-section-label">技能检定 · D100</div>
+      <div id="skillActions" class="skill-actions">
+        <div class="skill-empty">加载技能中…</div>
+      </div>
+      <div class="skill-section-label">属性检定 · D100</div>
+      <div id="attrActions" class="attr-actions">
+        <div class="skill-empty">加载属性中…</div>
+      </div>
+      <div class="dice-section-label">自由投骰</div>
+      <div class="dice-actions">
+        <button type="button" class="dice-btn" data-dice="d100">1D100</button>
+        <button type="button" class="dice-btn" data-dice="d6">1D6</button>
+        <button type="button" class="dice-btn" data-dice="d4">1D4</button>
+      </div>
+    </div>
+
+    <div id="playersPanel" class="players-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">玩家信息</div>
+          <div id="playersSubtitle" class="char-subtitle">全部调查员</div>
+        </div>
+        <button id="playersBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="playersContent"></div>
+    </div>
+
+    <div id="charPanel" class="char-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">调查员人物卡</div>
+          <div id="charSubtitle" class="char-subtitle"></div>
+        </div>
+        <button id="charBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="charContent"></div>
+    </div>
+  </div>
+
+  <div id="portraitModal" class="portrait-modal hidden" aria-hidden="true">
+    <div class="portrait-modal-backdrop" id="portraitBackdrop"></div>
+    <div class="portrait-modal-card" role="dialog" aria-modal="true" aria-labelledby="portraitCaption">
+      <button type="button" id="portraitCloseBtn" class="portrait-modal-close" aria-label="关闭">×</button>
+      <div class="portrait-modal-frame">
+        <img id="portraitImg" src="" alt="">
+        <span class="portrait-modal-corner portrait-modal-corner--tl" aria-hidden="true"></span>
+        <span class="portrait-modal-corner portrait-modal-corner--tr" aria-hidden="true"></span>
+        <span class="portrait-modal-corner portrait-modal-corner--bl" aria-hidden="true"></span>
+        <span class="portrait-modal-corner portrait-modal-corner--br" aria-hidden="true"></span>
+      </div>
+      <div id="portraitCaption" class="portrait-modal-caption"></div>
+      <div id="portraitSubtitle" class="portrait-modal-subtitle"></div>
+    </div>
+  </div>
+
+  <div id="checkModal" class="check-modal hidden" aria-hidden="true">
+    <div class="check-modal-backdrop" id="checkBackdrop"></div>
+    <div id="checkModalCard" class="check-modal-card">
+      <div id="checkFx" class="check-fx"></div>
+      <div id="checkSkillName" class="check-skill-name"></div>
+      <div id="checkRoll" class="check-roll">—</div>
+      <div id="checkResult" class="check-result"></div>
+      <div id="checkThresholds" class="check-thresholds"></div>
+      <button id="checkCloseBtn" type="button" class="check-close-btn">确定</button>
+    </div>
+  </div>
+
+  <script>
+    const cardEl = document.getElementById('card');
+    const authPanel = document.getElementById('authPanel');
+    const appPanel = document.getElementById('appPanel');
+    const usernameInput = document.getElementById('usernameInput');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const authError = document.getElementById('authError');
+    const usernameDisplay = document.getElementById('usernameDisplay');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const charBtn = document.getElementById('charBtn');
+    const playersBtn = document.getElementById('playersBtn');
+    const roleBadge = document.getElementById('roleBadge');
+    const playersPanel = document.getElementById('playersPanel');
+    const playersBackBtn = document.getElementById('playersBackBtn');
+    const playersContent = document.getElementById('playersContent');
+    const playersSubtitle = document.getElementById('playersSubtitle');
+    const charPanel = document.getElementById('charPanel');
+    const charBackBtn = document.getElementById('charBackBtn');
+    const charContent = document.getElementById('charContent');
+    const charSubtitle = document.getElementById('charSubtitle');
+    const authTabs = document.querySelectorAll('.auth-tab');
+    const resultsEl = document.getElementById('results');
+    const mapSelect = document.getElementById('mapSelect');
+    const npcSelect = document.getElementById('npcSelect');
+    const pcSelect = document.getElementById('pcSelect');
+    const investigatorBanner = document.getElementById('investigatorBanner');
+    const investigatorPortraitBtn = document.getElementById('investigatorPortraitBtn');
+    const investigatorPortraitImg = document.getElementById('investigatorPortraitImg');
+    const investigatorName = document.getElementById('investigatorName');
+    const investigatorOcc = document.getElementById('investigatorOcc');
+    const portraitModal = document.getElementById('portraitModal');
+    const portraitBackdrop = document.getElementById('portraitBackdrop');
+    const portraitCloseBtn = document.getElementById('portraitCloseBtn');
+    const portraitImg = document.getElementById('portraitImg');
+    const portraitCaption = document.getElementById('portraitCaption');
+    const portraitSubtitle = document.getElementById('portraitSubtitle');
+    const diceBtns = document.querySelectorAll('.dice-btn');
+    const skillActionsEl = document.getElementById('skillActions');
+    const attrActionsEl = document.getElementById('attrActions');
+    const checkModal = document.getElementById('checkModal');
+    const checkModalCard = document.getElementById('checkModalCard');
+    const checkBackdrop = document.getElementById('checkBackdrop');
+    const checkFx = document.getElementById('checkFx');
+    const checkSkillName = document.getElementById('checkSkillName');
+    const checkRollEl = document.getElementById('checkRoll');
+    const checkResultEl = document.getElementById('checkResult');
+    const checkThresholdsEl = document.getElementById('checkThresholds');
+    const checkCloseBtn = document.getElementById('checkCloseBtn');
+    let authMode = 'login';
+    let currentCharacter = null;
+    let skillCheckBusy = false;
+    let currentUserRole = 'player';
+    let canEditStatus = false;
+    let charViewSource = 'dice';
+    let viewingTarget = null;
+
+    const CHECK_RESULTS = {
+      crit_success: { label: '大成功', class: 'crit-success' },
+      extreme: { label: '极难成功', class: 'extreme' },
+      hard: { label: '困难成功', class: 'hard' },
+      success: { label: '成功', class: 'success' },
+      fail: { label: '失败', class: 'fail' },
+      crit_fail: { label: '大失败', class: 'crit-fail' },
+    };
+
+    const DICE = {
+      d100: {
+        sides: 100,
+        label: '1D100',
+        critSuccess: (n) => n <= 5,
+        critFail: (n) => n >= 95,
+      },
+      d6: {
+        sides: 6,
+        label: '1D6',
+      },
+      d4: {
+        sides: 4,
+        label: '1D4',
+      },
+    };
+
+    const MAP_LOCATIONS = {
+      hotel: '酒店',
+      dais: '戴斯家',
+      hospital: '医院',
+      police: '警察局',
+      church: '教堂',
+      bar: '酒吧',
+    };
+
+    const NPC_CHARACTERS = {
+      dais: { displayName: '戴斯' },
+      kaling: { displayName: '卡灵珊' },
+      priest: {
+        displayName: '神父',
+        portrait: 'assets/portraits/神父.png',
+        subtitle: '慈悲而冷静 · 长久注视令人恐惧',
+      },
+    };
+
+    const PC_CHARACTERS = {
+      '莉莉娅': {
+        displayName: '莉莉娅',
+        portrait: 'assets/portraits/莉莉娅.png',
+        occupation: '医生',
+      },
+      '特朗狗': {
+        displayName: '唐纳德·特朗狗',
+        portrait: 'assets/portraits/特朗狗.png',
+        occupation: '富二代',
+      },
+      '奥八嘎': {
+        displayName: '奥巴嘎',
+        portrait: 'assets/portraits/奥八嘎.png',
+        occupation: '雇佣兵退役的天主教牧师',
+      },
+    };
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+      });
+      const data = await res.json();
+      return { res, data };
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      authTabs.forEach((tab) => {
+        tab.classList.toggle('active', tab.dataset.mode === mode);
+      });
+      authSubmitBtn.textContent = mode === 'login' ? '登录' : '注册';
+      authError.textContent = '';
+    }
+
+    function showAuth() {
+      authPanel.classList.remove('hidden');
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      cardEl.classList.remove('sheet-mode');
+      authError.textContent = '';
+      usernameInput.value = '';
+      currentUserRole = 'player';
+      canEditStatus = false;
+    }
+
+    function resetGame() {
+      resultsEl.className = 'results placeholder';
+      resultsEl.textContent = '选择骰子、技能或属性进行检定';
+    }
+
+    function mapStorageKey(username) {
+      return `htmldice_map_${username}`;
+    }
+
+    function loadMapSelection(username) {
+      const saved = sessionStorage.getItem(mapStorageKey(username));
+      mapSelect.value = saved && MAP_LOCATIONS[saved] ? saved : '';
+    }
+
+    function saveMapSelection(username, value) {
+      if (value && MAP_LOCATIONS[value]) {
+        sessionStorage.setItem(mapStorageKey(username), value);
+      } else {
+        sessionStorage.removeItem(mapStorageKey(username));
+      }
+    }
+
+    function npcStorageKey(username) {
+      return `htmldice_npc_${username}`;
+    }
+
+    function loadNpcSelection(username) {
+      const saved = sessionStorage.getItem(npcStorageKey(username));
+      npcSelect.value = saved && getNpcMeta(saved) ? saved : '';
+    }
+
+    function saveNpcSelection(username, value) {
+      if (value && getNpcMeta(value)) {
+        sessionStorage.setItem(npcStorageKey(username), value);
+      } else {
+        sessionStorage.removeItem(npcStorageKey(username));
+      }
+    }
+
+    function pcStorageKey(username) {
+      return `htmldice_pc_${username}`;
+    }
+
+    function loadPcSelection(username) {
+      const saved = sessionStorage.getItem(pcStorageKey(username));
+      pcSelect.value = saved && PC_CHARACTERS[saved] ? saved : '';
+    }
+
+    function savePcSelection(username, value) {
+      if (value && PC_CHARACTERS[value]) {
+        sessionStorage.setItem(pcStorageKey(username), value);
+      } else {
+        sessionStorage.removeItem(pcStorageKey(username));
+      }
+    }
+
+    function getPcMeta(username) {
+      return PC_CHARACTERS[username] || null;
+    }
+
+    function getNpcMeta(key) {
+      return NPC_CHARACTERS[key] || null;
+    }
+
+    function showPortraitModal({ portrait, name, subtitle }) {
+      portraitImg.src = portrait;
+      portraitImg.alt = `${name} 肖像`;
+      portraitCaption.textContent = name;
+      portraitSubtitle.textContent = subtitle || '';
+
+      portraitModal.classList.remove('hidden');
+      portraitModal.setAttribute('aria-hidden', 'false');
+      portraitCloseBtn.focus();
+    }
+
+    function openPortraitModal(key, profile) {
+      const pc = getPcMeta(key);
+      if (pc) {
+        showPortraitModal({
+          portrait: pc.portrait,
+          name: profile?.name || pc.displayName,
+          subtitle: profile?.occupation || pc.occupation,
+        });
+        return;
+      }
+
+      const npc = getNpcMeta(key);
+      if (npc?.portrait) {
+        showPortraitModal({
+          portrait: npc.portrait,
+          name: npc.displayName,
+          subtitle: npc.subtitle || 'NPC',
+        });
+      }
+    }
+
+    function closePortraitModal() {
+      portraitModal.classList.add('hidden');
+      portraitModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function updateInvestigatorBanner(username, profile) {
+      const pc = getPcMeta(username);
+      if (!pc) {
+        investigatorBanner.classList.add('hidden');
+        return;
+      }
+
+      const name = profile?.name || pc.displayName;
+      const occ = profile?.occupation || pc.occupation;
+
+      investigatorPortraitImg.src = pc.portrait;
+      investigatorPortraitImg.alt = `${name} 肖像`;
+      investigatorName.textContent = name;
+      investigatorOcc.textContent = occ;
+      investigatorPortraitBtn.dataset.pc = username;
+      investigatorBanner.classList.remove('hidden');
+    }
+
+    function updateRoleUI(role) {
+      currentUserRole = role || 'player';
+      const isStaff = currentUserRole === 'admin' || currentUserRole === 'kp';
+      playersBtn.classList.toggle('hidden', !isStaff);
+      charBtn.classList.toggle('hidden', isStaff);
+
+      const roleLabels = { admin: '管理员', kp: 'KP', player: '' };
+      const label = roleLabels[currentUserRole] || '';
+      roleBadge.textContent = label ? ` · ${label}` : '';
+    }
+
+    async function loadCharacterData() {
+      if (currentUserRole === 'admin' || currentUserRole === 'kp') {
+        currentCharacter = null;
+        skillActionsEl.innerHTML = '<div class="skill-empty">管理员 / KP 模式，请使用「玩家信息」</div>';
+        attrActionsEl.innerHTML = '<div class="skill-empty">—</div>';
+        return;
+      }
+
+      skillActionsEl.innerHTML = '<div class="skill-empty">加载技能中…</div>';
+      attrActionsEl.innerHTML = '<div class="skill-empty">加载属性中…</div>';
+      const { data } = await api('/api/character');
+      if (!data.ok) {
+        currentCharacter = null;
+        skillActionsEl.innerHTML = `<div class="skill-empty">${escapeHtml(data.error || '暂无人物卡')}</div>`;
+        attrActionsEl.innerHTML = '<div class="skill-empty">—</div>';
+        return;
+      }
+      currentCharacter = data.character;
+      renderSkillButtons();
+      renderAttributeButtons();
+      updateInvestigatorBanner(usernameDisplay.textContent, currentCharacter.profile);
+    }
+
+    function getCharacterAttributes() {
+      return (currentCharacter?.attributes || []).filter(
+        (a) => a.value !== null && a.value !== undefined && a.value !== ''
+      );
+    }
+
+    function renderSkillButtons() {
+      const skills = currentCharacter?.skills || [];
+      if (!skills.length) {
+        skillActionsEl.innerHTML = '<div class="skill-empty">暂无技能数据</div>';
+        return;
+      }
+
+      skillActionsEl.replaceChildren();
+      skills.forEach((skill) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `skill-check-btn${skill.occupation ? ' occ' : ''}`;
+        btn.innerHTML = `<span class="skill-btn-name">${escapeHtml(skill.name)}</span><span class="skill-btn-val">${escapeHtml(skill.value)}</span>`;
+        btn.addEventListener('click', () => performSkillCheck(skill));
+        skillActionsEl.appendChild(btn);
+      });
+    }
+
+    function renderAttributeButtons() {
+      const attrs = getCharacterAttributes();
+      if (!attrs.length) {
+        attrActionsEl.innerHTML = '<div class="skill-empty">暂无属性数据</div>';
+        return;
+      }
+
+      attrActionsEl.replaceChildren();
+      attrs.forEach((attr) => {
+        const label = attr.label || attr.key;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'attr-check-btn';
+        btn.innerHTML = `<span class="attr-btn-name">${escapeHtml(label)}</span><span class="attr-btn-val">${escapeHtml(attr.value)}</span>`;
+        btn.addEventListener('click', () => performAttributeCheck(attr));
+        attrActionsEl.appendChild(btn);
+      });
+    }
+
+    function disableCheckButtons(disabled) {
+      document.querySelectorAll('.skill-check-btn, .attr-check-btn').forEach((btn) => {
+        btn.disabled = disabled;
+      });
+    }
+
+    function showApp(username, role) {
+      authPanel.classList.add('hidden');
+      appPanel.classList.remove('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      cardEl.classList.remove('sheet-mode');
+      usernameDisplay.textContent = username;
+      updateRoleUI(role);
+      loadMapSelection(username);
+      loadNpcSelection(username);
+      loadPcSelection(username);
+      resetGame();
+      investigatorBanner.classList.add('hidden');
+      loadCharacterData();
+      if (getPcMeta(username)) {
+        updateInvestigatorBanner(username);
+      }
+    }
+
+    function showCharacterView() {
+      appPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      charPanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+    }
+
+    function showPlayersView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+    }
+
+    function showDiceView() {
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      appPanel.classList.remove('hidden');
+      cardEl.classList.remove('sheet-mode');
+      charViewSource = 'dice';
+      viewingTarget = null;
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function infoRows(rows) {
+      return rows
+        .filter(([, value]) => value !== null && value !== undefined && value !== '')
+        .map(
+          ([label, value]) =>
+            `<div class="info-row"><span class="info-label">${escapeHtml(label)}</span><span class="info-value">${escapeHtml(value)}</span></div>`
+        )
+        .join('');
+    }
+
+    function renderKpControls() {
+      if (!canEditStatus || !viewingTarget) return '';
+      return `
+        <div class="kp-controls" id="kpControls">
+          <div class="kp-controls-title">KP 状态调整 · ${escapeHtml(viewingTarget)}</div>
+          <div class="kp-stat-row">
+            <span class="kp-stat-label">HP</span>
+            <button type="button" class="kp-adjust-btn minus" data-stat="hp" data-delta="-1">-1</button>
+            <span class="kp-stat-value" id="kpHpValue">—</span>
+            <button type="button" class="kp-adjust-btn plus" data-stat="hp" data-delta="1">+1</button>
+          </div>
+          <div class="kp-stat-row">
+            <span class="kp-stat-label">SAN</span>
+            <button type="button" class="kp-adjust-btn minus" data-stat="san" data-delta="-1">-1</button>
+            <span class="kp-stat-value" id="kpSanValue">—</span>
+            <button type="button" class="kp-adjust-btn plus" data-stat="san" data-delta="1">+1</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindKpControls(c) {
+      if (!canEditStatus || !viewingTarget) return;
+      const hpEl = document.getElementById('kpHpValue');
+      const sanEl = document.getElementById('kpSanValue');
+      if (hpEl) hpEl.textContent = c.status?.hp ?? '—';
+      if (sanEl) sanEl.textContent = c.status?.san ?? '—';
+
+      document.querySelectorAll('.kp-adjust-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          adjustCharacterStatus(btn.dataset.stat, Number(btn.dataset.delta));
+        });
+      });
+    }
+
+    async function adjustCharacterStatus(stat, delta) {
+      if (!viewingTarget || !canEditStatus) return;
+      const payload = { target: viewingTarget, hp_delta: 0, san_delta: 0 };
+      if (stat === 'hp') payload.hp_delta = delta;
+      if (stat === 'san') payload.san_delta = delta;
+
+      const { data } = await api('/api/character/status', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (!data.ok) {
+        alert(data.error || '调整失败');
+        return;
+      }
+
+      const hpEl = document.getElementById('kpHpValue');
+      const sanEl = document.getElementById('kpSanValue');
+      if (hpEl) hpEl.textContent = data.status.hp ?? '—';
+      if (sanEl) sanEl.textContent = data.status.san ?? '—';
+
+      const nums = document.querySelectorAll('.status-chip .num');
+      if (nums[0]) nums[0].textContent = data.status.hp ?? '—';
+      if (nums[1]) nums[1].textContent = data.status.san ?? '—';
+    }
+
+    function renderCharacterSheet(c) {
+      const p = c.profile;
+      const s = c.status;
+      const attrs = (c.attributes || [])
+        .map(
+          (a) => `<div class="attr-item"><div class="key">${escapeHtml(a.key)} ${escapeHtml(a.label)}</div><div class="val">${escapeHtml(a.value ?? '—')}</div><div class="half">1/2 · ${escapeHtml(a.half ?? '—')}</div></div>`
+        )
+        .join('');
+
+      const skills = (c.skills || [])
+        .map(
+          (sk) =>
+            `<div class="skill-item${sk.occupation ? ' occ' : ''}"><span class="skill-name">${escapeHtml(sk.name)}</span><span class="skill-val">${escapeHtml(sk.value)}</span></div>`
+        )
+        .join('');
+
+      const weapons = (c.weapons || [])
+        .map((w) => {
+          const meta = [w.detail, w.skill && `技能:${w.skill}`, w.damage && `伤害:${w.damage}`, w.range && `射程:${w.range}`, w.ammo && `弹药:${w.ammo}`]
+            .filter(Boolean)
+            .join(' · ');
+          return `<div class="weapon-item"><div class="weapon-name">${escapeHtml(w.name)}</div>${meta ? `<div class="weapon-meta">${escapeHtml(meta)}</div>` : ''}</div>`;
+        })
+        .join('');
+
+      const assets = c.assets || {};
+      const background = (c.background || [])
+        .map((b) => `<div class="bg-item"><div class="bg-label">${escapeHtml(b.label)}</div><div class="text-block">${escapeHtml(b.value)}</div></div>`)
+        .join('');
+
+      charSubtitle.textContent = `${p.name || ''} · ${p.occupation || ''}${viewingTarget ? ` · 账号 ${viewingTarget}` : ''}`;
+
+      const sheetUsername = viewingTarget || c.username || usernameDisplay.textContent;
+      const portraitHero = getPcMeta(sheetUsername)
+        ? `<section class="char-portrait-hero">
+            <button type="button" class="char-portrait-hero__btn" data-pc="${escapeHtml(sheetUsername)}" aria-label="查看 ${escapeHtml(p.name || sheetUsername)} 肖像">
+              <img src="${getPcMeta(sheetUsername).portrait}" alt="${escapeHtml(p.name || sheetUsername)} 肖像">
+              <span class="char-portrait-hero__shine" aria-hidden="true"></span>
+            </button>
+            <div class="char-portrait-hero__meta">
+              <div class="char-portrait-hero__name">${escapeHtml(p.name || getPcMeta(sheetUsername).displayName)}</div>
+              <div class="char-portrait-hero__occ">${escapeHtml(p.occupation || getPcMeta(sheetUsername).occupation)}</div>
+            </div>
+          </section>`
+        : '';
+
+      charContent.innerHTML = `
+        ${renderKpControls()}
+        ${portraitHero}
+        <section class="char-section">
+          <h2>基本信息</h2>
+          <div class="info-grid">${infoRows([
+            ['姓名', p.name],
+            ['玩家', p.player],
+            ['职业', p.occupation],
+            ['时代', p.era],
+            ['年龄', p.age],
+            ['性别', p.gender],
+            ['住地', p.residence],
+            ['故乡', p.birthplace],
+            ['当前时间', p.date],
+          ])}</div>
+        </section>
+        <section class="char-section">
+          <h2>状态</h2>
+          <div class="status-grid">
+            <div class="status-chip"><span class="num">${escapeHtml(s.hp ?? '—')}</span><span class="label">HP ${escapeHtml(s.hp_state || '')}</span></div>
+            <div class="status-chip"><span class="num">${escapeHtml(s.san ?? '—')}</span><span class="label">SAN ${escapeHtml(s.san_state || '')}</span></div>
+            <div class="status-chip"><span class="num">${escapeHtml(s.mp ?? '—')}</span><span class="label">MP</span></div>
+            <div class="status-chip"><span class="num">${escapeHtml(s.mov ?? '—')}</span><span class="label">MOV</span></div>
+          </div>
+        </section>
+        <section class="char-section">
+          <h2>属性</h2>
+          <div class="attr-grid">${attrs}</div>
+        </section>
+        ${c.occupation_note ? `<section class="char-section"><h2>本职说明</h2><div class="text-block">${escapeHtml(c.occupation_note)}</div></section>` : ''}
+        <section class="char-section">
+          <h2>技能</h2>
+          <div class="skill-grid">${skills || '<div class="char-empty">无技能数据</div>'}</div>
+        </section>
+        ${weapons ? `<section class="char-section"><h2>武器</h2>${weapons}</section>` : ''}
+        <section class="char-section">
+          <h2>资产</h2>
+          <div class="info-grid">${infoRows([
+            ['信用评级', assets.credit_rating],
+            ['生活水平', assets.living_standard],
+            ['消费水平', assets.spending_level],
+            ['其他资产', assets.other_assets],
+            ['现金', assets.cash],
+            ['单位', assets.unit],
+          ])}</div>
+          ${assets.description ? `<div class="text-block" style="margin-top:0.75rem">${escapeHtml(assets.description)}</div>` : ''}
+          ${assets.asset_detail ? `<div class="text-block" style="margin-top:0.75rem">${escapeHtml(assets.asset_detail)}</div>` : ''}
+        </section>
+        ${c.appearance ? `<section class="char-section"><h2>形象描述</h2><div class="text-block">${escapeHtml(c.appearance)}</div></section>` : ''}
+        ${background ? `<section class="char-section"><h2>背景</h2>${background}</section>` : ''}
+      `;
+
+      bindKpControls(c);
+
+      charContent.querySelector('.char-portrait-hero__btn')?.addEventListener('click', () => {
+        openPortraitModal(sheetUsername, p);
+      });
+    }
+
+    async function fetchCharacter(target) {
+      const url = target ? `/api/character?target=${encodeURIComponent(target)}` : '/api/character';
+      return api(url);
+    }
+
+    async function openCharacterSheet() {
+      charViewSource = 'dice';
+      viewingTarget = null;
+      canEditStatus = false;
+      showCharacterView();
+      charBackBtn.textContent = '返回投骰';
+
+      if (currentCharacter) {
+        renderCharacterSheet(currentCharacter);
+        return;
+      }
+
+      charContent.innerHTML = '<div class="char-loading">加载人物卡…</div>';
+      const { data } = await fetchCharacter();
+      if (!data.ok) {
+        charContent.innerHTML = `<div class="char-error">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+      currentCharacter = data.character;
+      renderCharacterSheet(currentCharacter);
+    }
+
+    async function openPlayersPanel() {
+      showPlayersView();
+      playersContent.innerHTML = '<div class="char-loading">加载玩家列表…</div>';
+      const { data } = await api('/api/players');
+      if (!data.ok) {
+        playersContent.innerHTML = `<div class="char-error">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+
+      canEditStatus = !!data.can_edit_status;
+      playersSubtitle.textContent = canEditStatus ? '全部调查员 · KP 可调整 HP/SAN' : '全部调查员 · 只读';
+
+      if (!data.players.length) {
+        playersContent.innerHTML = '<div class="char-empty">暂无玩家数据</div>';
+        return;
+      }
+
+      const list = document.createElement('div');
+      list.className = 'player-list';
+      data.players.forEach((player) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'player-card-btn';
+        btn.innerHTML = `
+          <div class="player-card-name">${escapeHtml(player.name)}</div>
+          <div class="player-card-meta">账号：${escapeHtml(player.username)} · ${escapeHtml(player.occupation || '未知职业')}</div>
+          <div class="player-card-stats">HP ${escapeHtml(player.hp ?? '—')} · SAN ${escapeHtml(player.san ?? '—')}</div>
+        `;
+        btn.addEventListener('click', () => openPlayerCharacter(player.username));
+        list.appendChild(btn);
+      });
+      playersContent.replaceChildren(list);
+    }
+
+    async function openPlayerCharacter(username) {
+      charViewSource = 'players';
+      viewingTarget = username;
+      showCharacterView();
+      charBackBtn.textContent = '返回列表';
+      charContent.innerHTML = '<div class="char-loading">加载人物卡…</div>';
+
+      const { data } = await fetchCharacter(username);
+      if (!data.ok) {
+        charContent.innerHTML = `<div class="char-error">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+
+      canEditStatus = !!data.can_edit_status;
+      renderCharacterSheet(data.character);
+    }
+
+    function handleCharBack() {
+      if (charViewSource === 'players') {
+        openPlayersPanel();
+        return;
+      }
+      showDiceView();
+    }
+
+    function evaluateSkillCheck(roll, skillValue) {
+      const half = Math.floor(skillValue / 2);
+      const quarter = Math.floor(skillValue / 4);
+      let type = 'fail';
+
+      if (roll >= 95) {
+        type = 'crit_fail';
+      } else if (roll <= 5) {
+        type = 'crit_success';
+      } else if (roll <= quarter) {
+        type = 'extreme';
+      } else if (roll <= half) {
+        type = 'hard';
+      } else if (roll <= skillValue) {
+        type = 'success';
+      }
+
+      return { type, skillValue, half, quarter };
+    }
+
+    function openCheckModal() {
+      checkModal.classList.remove('hidden');
+      checkModal.setAttribute('aria-hidden', 'false');
+      checkFx.replaceChildren();
+      checkResultEl.className = 'check-result';
+      checkResultEl.textContent = '检定中…';
+      checkRollEl.className = 'check-roll rolling';
+      checkRollEl.textContent = '—';
+      checkModalCard.classList.remove('shake', 'success-flash');
+    }
+
+    function closeCheckModal() {
+      checkModal.classList.add('hidden');
+      checkModal.setAttribute('aria-hidden', 'true');
+      skillCheckBusy = false;
+      disableCheckButtons(false);
+    }
+
+    function renderCheckThresholds(outcome, roll) {
+      const { skillValue, half, quarter, type } = outcome;
+      const hitSkill = ['success', 'hard', 'extreme', 'crit_success'].includes(type);
+      const hitHard = ['hard', 'extreme', 'crit_success'].includes(type);
+      const hitExtreme = ['extreme', 'crit_success'].includes(type);
+
+      checkThresholdsEl.innerHTML = [
+        ['鉴定值', skillValue, hitSkill],
+        ['困难 ≤1/2', half, hitHard],
+        ['极难 ≤1/4', quarter, hitExtreme],
+        ['掷骰结果', roll, true],
+      ]
+        .map(
+          ([label, value, hit]) =>
+            `<div class="check-threshold${hit ? ' hit' : ''}">${escapeHtml(label)}<strong>${escapeHtml(value)}</strong></div>`
+        )
+        .join('');
+    }
+
+    function playCheckEffects(type, roll) {
+      checkRollEl.classList.remove('rolling');
+      void checkRollEl.offsetWidth;
+      checkRollEl.classList.add('pop');
+
+      if (type === 'crit_success') {
+        spawnFireworks(checkFx);
+        checkModalCard.classList.add('success-flash');
+      } else if (type === 'crit_fail') {
+        spawnExplosion(checkFx, checkRollEl, checkModalCard);
+      } else if (type === 'extreme' || type === 'hard') {
+        spawnFireworks(checkFx);
+        checkModalCard.classList.add('success-flash');
+      } else if (type === 'success') {
+        checkModalCard.classList.add('success-flash');
+      } else if (type === 'fail') {
+        checkModalCard.classList.remove('shake');
+        void checkModalCard.offsetWidth;
+        checkModalCard.classList.add('shake');
+      }
+    }
+
+    async function performD100Check(name, value) {
+      if (skillCheckBusy || value == null) return;
+      skillCheckBusy = true;
+      disableCheckButtons(true);
+
+      openCheckModal();
+      checkSkillName.textContent = `${name} · 鉴定 ${value}`;
+
+      const rollStart = Date.now();
+      while (Date.now() - rollStart < 650) {
+        checkRollEl.textContent = Math.floor(Math.random() * 100) + 1;
+        await new Promise((resolve) => setTimeout(resolve, 45));
+      }
+
+      const roll = rollDie('d100');
+      const outcome = evaluateSkillCheck(roll, value);
+      const result = CHECK_RESULTS[outcome.type];
+
+      checkRollEl.textContent = roll;
+      checkResultEl.className = `check-result ${result.class}`;
+      checkResultEl.textContent = result.label;
+      renderCheckThresholds(outcome, roll);
+      playCheckEffects(outcome.type, roll);
+
+      resultsEl.className = 'results';
+      const rolls = document.createElement('div');
+      rolls.className = 'rolls';
+      rolls.appendChild(createRoll(name, roll, 'accent', true, false, 'd100'));
+      resultsEl.replaceChildren(rolls);
+    }
+
+    async function performSkillCheck(skill) {
+      await performD100Check(skill.name, skill.value);
+    }
+
+    async function performAttributeCheck(attr) {
+      const name = attr.label || attr.key;
+      await performD100Check(name, Number(attr.value));
+    }
+
+    async function checkAuth() {
+      const { data } = await api('/api/me');
+      if (data.logged_in) {
+        showApp(data.username, data.role);
+      } else {
+        showAuth();
+      }
+    }
+
+    authTabs.forEach((tab) => {
+      tab.addEventListener('click', () => setAuthMode(tab.dataset.mode));
+    });
+
+    authSubmitBtn.addEventListener('click', async () => {
+      const username = usernameInput.value.trim();
+      if (!username) {
+        authError.textContent = '请输入用户名';
+        return;
+      }
+
+      authSubmitBtn.disabled = true;
+      authError.textContent = '';
+
+      const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+      const { res, data } = await api(endpoint, {
+        method: 'POST',
+        body: JSON.stringify({ username }),
+      });
+
+      authSubmitBtn.disabled = false;
+
+      if (!data.ok) {
+        authError.textContent = data.error || '操作失败';
+        return;
+      }
+
+      showApp(data.username, data.role);
+    });
+
+    usernameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') authSubmitBtn.click();
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await api('/api/logout', { method: 'POST', body: '{}' });
+      showAuth();
+    });
+
+    charBtn.addEventListener('click', openCharacterSheet);
+    playersBtn.addEventListener('click', openPlayersPanel);
+    charBackBtn.addEventListener('click', handleCharBack);
+    playersBackBtn.addEventListener('click', showDiceView);
+    checkCloseBtn.addEventListener('click', closeCheckModal);
+    checkBackdrop.addEventListener('click', closeCheckModal);
+
+    mapSelect.addEventListener('change', () => {
+      const username = usernameDisplay.textContent;
+      if (username) saveMapSelection(username, mapSelect.value);
+    });
+
+    npcSelect.addEventListener('change', () => {
+      const username = usernameDisplay.textContent;
+      const npcKey = npcSelect.value;
+      if (username) saveNpcSelection(username, npcKey);
+      if (npcKey) openPortraitModal(npcKey);
+    });
+
+    pcSelect.addEventListener('change', () => {
+      const username = usernameDisplay.textContent;
+      const pcKey = pcSelect.value;
+      if (username) savePcSelection(username, pcKey);
+      if (pcKey && PC_CHARACTERS[pcKey]) {
+        openPortraitModal(pcKey);
+      }
+    });
+
+    investigatorPortraitBtn.addEventListener('click', () => {
+      const pcKey = investigatorPortraitBtn.dataset.pc;
+      if (pcKey) {
+        openPortraitModal(pcKey, currentCharacter?.profile);
+      }
+    });
+
+    portraitCloseBtn.addEventListener('click', closePortraitModal);
+    portraitBackdrop.addEventListener('click', closePortraitModal);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !portraitModal.classList.contains('hidden')) {
+        closePortraitModal();
+      }
+    });
+
+    checkAuth();
+
+    const FIREWORK_COLORS = ['#c9a227', '#6fcf97', '#5ec4a8', '#3d8f62', '#d4c4a8', '#2d5a42'];
+    const EXPLOSION_COLORS = ['#7a2030', '#b83248', '#3d2817', '#1a3328', '#e85d04', '#030806'];
+
+    function rollDie(diceKey) {
+      const sides = DICE[diceKey].sides;
+      return Math.floor(Math.random() * sides) + 1;
+    }
+
+    function getOutcome(num, diceKey) {
+      if (diceKey !== 'd100') return null;
+      const dice = DICE[diceKey];
+      if (dice.critSuccess(num)) return 'success';
+      if (dice.critFail(num)) return 'fail';
+      return null;
+    }
+
+    function spawnFireworks(fxEl) {
+      const count = 28;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+        const dist = 35 + Math.random() * 45;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+
+        const particle = document.createElement('span');
+        particle.className = 'firework-particle';
+        particle.style.setProperty('--tx', `${tx}px`);
+        particle.style.setProperty('--ty', `${ty}px`);
+        particle.style.background = FIREWORK_COLORS[i % FIREWORK_COLORS.length];
+        particle.addEventListener('animationend', () => particle.remove(), { once: true });
+        fxEl.appendChild(particle);
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 20 + Math.random() * 30;
+        const spark = document.createElement('span');
+        spark.className = 'firework-spark';
+        spark.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+        spark.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+        spark.addEventListener('animationend', () => spark.remove(), { once: true });
+        fxEl.appendChild(spark);
+      }
+    }
+
+    function spawnExplosion(fxEl, numEl, shakeEl = cardEl) {
+      shakeEl.classList.remove('shake');
+      void shakeEl.offsetWidth;
+      shakeEl.classList.add('shake');
+
+      const ring = document.createElement('span');
+      ring.className = 'explosion-ring';
+      ring.addEventListener('animationend', () => ring.remove(), { once: true });
+      fxEl.appendChild(ring);
+
+      numEl.classList.add('explode');
+
+      for (let i = 0; i < 20; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 55;
+        const particle = document.createElement('span');
+        particle.className = 'explosion-particle';
+        particle.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+        particle.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+        particle.style.setProperty('--rot', `${Math.random() * 360}deg`);
+        particle.style.background = EXPLOSION_COLORS[i % EXPLOSION_COLORS.length];
+        particle.addEventListener('animationend', () => particle.remove(), { once: true });
+        fxEl.appendChild(particle);
+      }
+    }
+
+    function applyOutcome(num, fxEl, numEl, playEffect, diceKey) {
+      const outcome = getOutcome(num, diceKey);
+      if (!outcome) return null;
+
+      if (playEffect) {
+        if (outcome === 'success') {
+          spawnFireworks(fxEl);
+        } else {
+          spawnExplosion(fxEl, numEl);
+        }
+      }
+
+      const tag = document.createElement('span');
+      tag.className = `special-tag ${outcome === 'success' ? 'crit-success' : 'crit-fail'}`;
+      tag.textContent = outcome === 'success' ? '大成功' : '大失败';
+      return tag;
+    }
+
+    function createRoll(label, num, color, animate, playEffect, diceKey) {
+      const rollEl = document.createElement('div');
+      rollEl.className = 'roll';
+
+      const labelEl = document.createElement('span');
+      labelEl.className = 'roll-label';
+      labelEl.textContent = label;
+
+      const numWrap = document.createElement('div');
+      numWrap.className = 'roll-num-wrap';
+
+      const fxEl = document.createElement('div');
+      fxEl.className = 'roll-fx';
+
+      const numEl = document.createElement('span');
+      numEl.className = `roll-num ${color}`;
+      numEl.textContent = num;
+
+      numWrap.append(fxEl, numEl);
+
+      const specialTag = applyOutcome(num, fxEl, numEl, playEffect, diceKey);
+
+      rollEl.append(labelEl, numWrap);
+      if (specialTag) rollEl.appendChild(specialTag);
+
+      if (animate) {
+        void numEl.offsetWidth;
+        numEl.classList.add('pop');
+      }
+
+      return rollEl;
+    }
+
+    function showSingleRoll(diceKey, num) {
+      resultsEl.className = 'results';
+      const rolls = document.createElement('div');
+      rolls.className = 'rolls';
+      rolls.appendChild(createRoll(DICE[diceKey].label, num, 'accent', true, true, diceKey));
+      resultsEl.replaceChildren(rolls);
+    }
+
+    function handleSimpleRoll(diceKey) {
+      const result = rollDie(diceKey);
+      showSingleRoll(diceKey, result);
+    }
+
+    diceBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        handleSimpleRoll(btn.dataset.dice);
+      });
+    });
+  </script>
+</body>
+</html>

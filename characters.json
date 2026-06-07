@@ -1,0 +1,1357 @@
+{
+  "莉莉娅": {
+    "username": "莉莉娅",
+    "profile": {
+      "name": "莉莉娅",
+      "player": "十一",
+      "era": "现代",
+      "occupation": "医生",
+      "occupation_id": "44",
+      "age": 32,
+      "gender": "女",
+      "residence": "",
+      "birthplace": "",
+      "date": "公元 2023 1月 1日 0：00"
+    },
+    "status": {
+      "hp": 10,
+      "hp_state": "健康",
+      "san": 99,
+      "san_state": "清醒",
+      "mp": 16,
+      "mov": 8,
+      "major_wound": 5,
+      "temp_hp": 0,
+      "san_loss_today": 0,
+      "san_remaining": 0
+    },
+    "occupation_note": "[医生（原作向）]的本职技能：急救、医学、外语（拉丁文）、心理学、科学（生物学，制药），任两种其他学术或个人特长。",
+    "attributes": [
+      {
+        "key": "STR",
+        "label": "力量",
+        "value": 50,
+        "half": 25
+      },
+      {
+        "key": "DEX",
+        "label": "敏捷",
+        "value": 80,
+        "half": 40
+      },
+      {
+        "key": "CON",
+        "label": "体质",
+        "value": 50,
+        "half": 25
+      },
+      {
+        "key": "APP",
+        "label": "外貌",
+        "value": 50,
+        "half": 25
+      },
+      {
+        "key": "SIZ",
+        "label": "体型",
+        "value": 50,
+        "half": 25
+      },
+      {
+        "key": "INT",
+        "label": "智力",
+        "value": 80,
+        "half": 40
+      },
+      {
+        "key": "POW",
+        "label": "意志",
+        "value": 80,
+        "half": 40
+      },
+      {
+        "key": "EDU",
+        "label": "教育",
+        "value": 80,
+        "half": 40
+      },
+      {
+        "key": "LUK",
+        "label": "幸运",
+        "value": 65,
+        "half": 32
+      }
+    ],
+    "skills": [
+      {
+        "name": "医学",
+        "value": 81,
+        "occupation": true
+      },
+      {
+        "name": "图书馆使用",
+        "value": 80,
+        "occupation": true
+      },
+      {
+        "name": "心理学",
+        "value": 80,
+        "occupation": true
+      },
+      {
+        "name": "急救",
+        "value": 80,
+        "occupation": true
+      },
+      {
+        "name": "母语",
+        "value": 80,
+        "occupation": false
+      },
+      {
+        "name": "精神分析",
+        "value": 61,
+        "occupation": true
+      },
+      {
+        "name": "射击：",
+        "value": 60,
+        "occupation": false
+      },
+      {
+        "name": "格斗：",
+        "value": 60,
+        "occupation": false
+      },
+      {
+        "name": "闪避",
+        "value": 60,
+        "occupation": false
+      },
+      {
+        "name": "信用评级",
+        "value": 55,
+        "occupation": true
+      },
+      {
+        "name": "侦查",
+        "value": 25,
+        "occupation": false
+      },
+      {
+        "name": "投掷",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "攀爬",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "汽车驾驶",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "游泳",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "潜行",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "聆听",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "跳跃",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "取悦",
+        "value": 15,
+        "occupation": false
+      },
+      {
+        "name": "恐吓",
+        "value": 15,
+        "occupation": false
+      },
+      {
+        "name": "博物学",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "妙手",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "导航",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "机械维修",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "生存：",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "电气维修",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "说服",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "追踪",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "乔装",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "会计",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "估价",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "动物驯养",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "历史",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺①",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺②",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺③",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "法律",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "神秘学",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "计算机使用 Ω",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "话术",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "骑术",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "人类学",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "催眠",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语①",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语②",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语③",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "学识：",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "操作重型机械",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "潜水",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "炮术",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "爆破",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "电子学 Ω",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学①",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学②",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学③",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "考古学",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "读唇",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "锁匠",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "驾驶：",
+        "value": 1,
+        "occupation": false
+      }
+    ],
+    "weapons": [
+      {
+        "name": "武器名称",
+        "detail": "类型",
+        "skill": "使用技能",
+        "damage": "伤害",
+        "range": "成功率",
+        "attacks": "",
+        "ammo": ""
+      },
+      {
+        "name": "无",
+        "detail": "肉搏",
+        "skill": "斗殴",
+        "damage": "1D3+DB",
+        "range": "60",
+        "attacks": "30",
+        "ammo": "12"
+      },
+      {
+        "name": "手术刀",
+        "detail": "小型刀具(弹簧折叠刀等)",
+        "skill": "斗殴",
+        "damage": "1D4+DB",
+        "range": "60",
+        "attacks": "30",
+        "ammo": "12"
+      },
+      {
+        "name": "手枪",
+        "detail": "9mm 格洛克 17",
+        "skill": "手枪",
+        "damage": "1D10",
+        "range": "60",
+        "attacks": "30",
+        "ammo": "12"
+      }
+    ],
+    "assets": {
+      "credit_rating": "55%/27%/11%",
+      "living_standard": "小康",
+      "spending_level": "1000",
+      "other_assets": "55万",
+      "cash": "5500",
+      "unit": "美元",
+      "description": "小康级别已经可以享受奢侈品的舒适了。住所：真材实料的住地，也许会有一些仆人（管家，主妇，清洁工，园丁，等等）。乡下估计还有小别墅。会住昂贵的宾馆。旅行：头等舱。会买高档车或同等的交通工具。",
+      "asset_detail": "请在这里详述你的资产"
+    },
+    "appearance": "红头发，深绿眼睛，中等身材，非工作时间只穿长风衣和衬衫。",
+    "background": [
+      {
+        "label": "思想与信念",
+        "value": "希波克拉底誓言"
+      },
+      {
+        "label": "重要之人",
+        "value": "学医生涯的导师"
+      },
+      {
+        "label": "意义非凡之地",
+        "value": "大学"
+      },
+      {
+        "label": "宝贵之物",
+        "value": "随身携带的手术刀"
+      },
+      {
+        "label": "特质",
+        "value": "冷静，相信科学"
+      },
+      {
+        "label": "伤口和疤痕",
+        "value": "无"
+      },
+      {
+        "label": "恐惧症和躁狂症",
+        "value": "无"
+      }
+    ]
+  },
+  "特朗狗": {
+    "username": "特朗狗",
+    "profile": {
+      "name": "唐纳德·特朗狗",
+      "player": "一条大狗",
+      "era": "现代",
+      "occupation": "富二代",
+      "occupation_id": "38",
+      "age": 23,
+      "gender": "男",
+      "residence": "纽约",
+      "birthplace": "纽约",
+      "date": "公元 2023 1月 1日 0：00"
+    },
+    "status": {
+      "hp": 14,
+      "hp_state": "健康",
+      "san": 98,
+      "san_state": "清醒",
+      "mp": 12,
+      "mov": 7,
+      "major_wound": 7,
+      "temp_hp": 0,
+      "san_loss_today": 0,
+      "san_remaining": 0
+    },
+    "occupation_note": "[罪犯-混混]的本职技能：攀爬，一项社交技能（取悦、话术、恐吓、说服），格斗，射击，跳跃，妙手，潜行，投掷。",
+    "attributes": [
+      {
+        "key": "STR",
+        "label": "力量",
+        "value": 60,
+        "half": 30
+      },
+      {
+        "key": "DEX",
+        "label": "敏捷",
+        "value": 70,
+        "half": 35
+      },
+      {
+        "key": "CON",
+        "label": "体质",
+        "value": 70,
+        "half": 35
+      },
+      {
+        "key": "APP",
+        "label": "外貌",
+        "value": 60,
+        "half": 30
+      },
+      {
+        "key": "SIZ",
+        "label": "体型",
+        "value": 70,
+        "half": 35
+      },
+      {
+        "key": "INT",
+        "label": "智力",
+        "value": 70,
+        "half": 35
+      },
+      {
+        "key": "POW",
+        "label": "意志",
+        "value": 60,
+        "half": 30
+      },
+      {
+        "key": "EDU",
+        "label": "教育",
+        "value": 60,
+        "half": 30
+      },
+      {
+        "key": "LUK",
+        "label": "幸运",
+        "value": 40,
+        "half": 20
+      }
+    ],
+    "skills": [
+      {
+        "name": "格斗：",
+        "value": 75,
+        "occupation": true
+      },
+      {
+        "name": "射击：",
+        "value": 70,
+        "occupation": true
+      },
+      {
+        "name": "取悦",
+        "value": 65,
+        "occupation": false
+      },
+      {
+        "name": "母语",
+        "value": 60,
+        "occupation": false
+      },
+      {
+        "name": "恐吓",
+        "value": 55,
+        "occupation": false
+      },
+      {
+        "name": "信用评级",
+        "value": 50,
+        "occupation": true
+      },
+      {
+        "name": "妙手",
+        "value": 50,
+        "occupation": true
+      },
+      {
+        "name": "攀爬",
+        "value": 50,
+        "occupation": true
+      },
+      {
+        "name": "跳跃",
+        "value": 50,
+        "occupation": true
+      },
+      {
+        "name": "话术",
+        "value": 45,
+        "occupation": false
+      },
+      {
+        "name": "闪避",
+        "value": 35,
+        "occupation": false
+      },
+      {
+        "name": "急救",
+        "value": 30,
+        "occupation": false
+      },
+      {
+        "name": "说服",
+        "value": 30,
+        "occupation": false
+      },
+      {
+        "name": "侦查",
+        "value": 25,
+        "occupation": false
+      },
+      {
+        "name": "图书馆使用",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "投掷",
+        "value": 20,
+        "occupation": true
+      },
+      {
+        "name": "汽车驾驶",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "游泳",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "潜行",
+        "value": 20,
+        "occupation": true
+      },
+      {
+        "name": "聆听",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "博物学",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "导航",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "心理学",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "机械维修",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "生存：",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "电气维修",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "追踪",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "乔装",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "会计",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "估价",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "动物驯养",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "历史",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺①",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺②",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺③",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "法律",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "神秘学",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "计算机使用 Ω",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "骑术",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "人类学",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "催眠",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "医学",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语①",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语②",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语③",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "学识：",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "操作重型机械",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "潜水",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "炮术",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "爆破",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "电子学 Ω",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学①",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学②",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学③",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "精神分析",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "考古学",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "读唇",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "锁匠",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "驾驶：",
+        "value": 1,
+        "occupation": false
+      }
+    ],
+    "weapons": [
+      {
+        "name": "武器名称",
+        "detail": "类型",
+        "skill": "使用技能",
+        "damage": "伤害",
+        "range": "成功率",
+        "attacks": "",
+        "ammo": ""
+      },
+      {
+        "name": "无",
+        "detail": "肉搏",
+        "skill": "斗殴",
+        "damage": "1D3+DB",
+        "range": "75",
+        "attacks": "37",
+        "ammo": "15"
+      },
+      {
+        "name": "小咪咪",
+        "detail": "IMI 沙漠之鹰",
+        "skill": "手枪",
+        "damage": "1D10+1D6+3",
+        "range": "70",
+        "attacks": "35",
+        "ammo": "14"
+      },
+      {
+        "name": "折叠刀",
+        "detail": "小型刀具(弹簧折叠刀等)",
+        "skill": "斗殴",
+        "damage": "1D4+DB",
+        "range": "75",
+        "attacks": "37",
+        "ammo": "15"
+      }
+    ],
+    "assets": {
+      "credit_rating": "50%/25%/10%",
+      "living_standard": "小康",
+      "spending_level": "1000",
+      "other_assets": "50万",
+      "cash": "5000",
+      "unit": "美元",
+      "description": "小康级别已经可以享受奢侈品的舒适了。住所：真材实料的住地，也许会有一些仆人（管家，主妇，清洁工，园丁，等等）。乡下估计还有小别墅。会住昂贵的宾馆。旅行：头等舱。会买高档车或同等的交通工具。",
+      "asset_detail": "我是一个富二代纨绔子弟。我的家庭在外人看起来非常有钱，但我知道我爹的生意正在面临困境，但相比于普通家庭还是很富有的。我从小衣食无忧，但我没有什么个人所有"
+    },
+    "appearance": "一个一米八的男性，长相中等偏上，但因为我是个富二代，我的家族在纽约商界颇有名气，所以看起来比较光鲜亮丽。",
+    "background": [
+      {
+        "label": "思想与信念",
+        "value": "受过良好的教育，毕业于纽约大学社会学专业，在校时支持女权运动，但实际是个神棍，没有崇高理想只想享受生活。参与女权主义运动只是为了泡妞"
+      },
+      {
+        "label": "重要之人",
+        "value": "我的富豪老爹"
+      },
+      {
+        "label": "意义非凡之地",
+        "value": "没有"
+      },
+      {
+        "label": "宝贵之物",
+        "value": "我的小折叠刀和手枪，每次都能让我成功恐吓别人。但我此前从未用它们真的杀过人"
+      },
+      {
+        "label": "特质",
+        "value": "标准纨绔子弟，油嘴滑舌，蔑视规则，但因为受过良好教育所以整体素质不错。"
+      },
+      {
+        "label": "伤口和疤痕",
+        "value": "没有明显伤疤"
+      },
+      {
+        "label": "恐惧症和躁狂症",
+        "value": "没有"
+      }
+    ]
+  },
+  "奥八嘎": {
+    "username": "奥八嘎",
+    "profile": {
+      "name": "奥巴嘎",
+      "player": "Aug",
+      "era": "1920s",
+      "occupation": "雇佣兵退役的天主教牧师",
+      "occupation_id": "123",
+      "age": null,
+      "gender": "女",
+      "residence": "",
+      "birthplace": "",
+      "date": "公元 2023 1月 1日 0：00"
+    },
+    "status": {
+      "hp": 15,
+      "hp_state": "健康",
+      "san": 97,
+      "san_state": "清醒",
+      "mp": 12,
+      "mov": 7,
+      "major_wound": 8,
+      "temp_hp": 0,
+      "san_loss_today": 0,
+      "san_remaining": 0
+    },
+    "occupation_note": "[神职人员(天主教牧师)]的本职技能：会计，母语，外语(拉丁文)，图书馆，神秘学，一项社交技能（取悦、话术、恐吓、说服），心理学，任意一项其他技能。",
+    "attributes": [
+      {
+        "key": "STR",
+        "label": "力量",
+        "value": 70,
+        "half": 35
+      },
+      {
+        "key": "DEX",
+        "label": "敏捷",
+        "value": 60,
+        "half": 30
+      },
+      {
+        "key": "CON",
+        "label": "体质",
+        "value": 80,
+        "half": 40
+      },
+      {
+        "key": "APP",
+        "label": "外貌",
+        "value": 50,
+        "half": 25
+      },
+      {
+        "key": "SIZ",
+        "label": "体型",
+        "value": 70,
+        "half": 35
+      },
+      {
+        "key": "INT",
+        "label": "智力",
+        "value": 70,
+        "half": 35
+      },
+      {
+        "key": "POW",
+        "label": "意志",
+        "value": 60,
+        "half": 30
+      },
+      {
+        "key": "EDU",
+        "label": "教育",
+        "value": 60,
+        "half": 30
+      },
+      {
+        "key": "LUK",
+        "label": "幸运",
+        "value": 70,
+        "half": 35
+      }
+    ],
+    "skills": [
+      {
+        "name": "母语",
+        "value": 80,
+        "occupation": true
+      },
+      {
+        "name": "信用评级",
+        "value": 65,
+        "occupation": true
+      },
+      {
+        "name": "神秘学",
+        "value": 65,
+        "occupation": true
+      },
+      {
+        "name": "图书馆使用",
+        "value": 60,
+        "occupation": true
+      },
+      {
+        "name": "心理学",
+        "value": 60,
+        "occupation": true
+      },
+      {
+        "name": "急救",
+        "value": 60,
+        "occupation": false
+      },
+      {
+        "name": "医学",
+        "value": 31,
+        "occupation": false
+      },
+      {
+        "name": "导航",
+        "value": 30,
+        "occupation": false
+      },
+      {
+        "name": "说服",
+        "value": 30,
+        "occupation": false
+      },
+      {
+        "name": "闪避",
+        "value": 30,
+        "occupation": false
+      },
+      {
+        "name": "侦查",
+        "value": 25,
+        "occupation": false
+      },
+      {
+        "name": "格斗：",
+        "value": 25,
+        "occupation": false
+      },
+      {
+        "name": "催眠",
+        "value": 21,
+        "occupation": false
+      },
+      {
+        "name": "外语①",
+        "value": 21,
+        "occupation": false
+      },
+      {
+        "name": "射击：",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "投掷",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "攀爬",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "汽车驾驶",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "游泳",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "潜行",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "聆听",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "跳跃",
+        "value": 20,
+        "occupation": false
+      },
+      {
+        "name": "取悦",
+        "value": 15,
+        "occupation": false
+      },
+      {
+        "name": "恐吓",
+        "value": 15,
+        "occupation": false
+      },
+      {
+        "name": "会计",
+        "value": 10,
+        "occupation": true
+      },
+      {
+        "name": "博物学",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "妙手",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "机械维修",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "生存：",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "电气维修",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "追踪",
+        "value": 10,
+        "occupation": false
+      },
+      {
+        "name": "乔装",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "估价",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "动物驯养",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "历史",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺①",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺②",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "技艺③",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "法律",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "计算机使用 Ω",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "话术",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "骑术",
+        "value": 5,
+        "occupation": false
+      },
+      {
+        "name": "人类学",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语②",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "外语③",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "学识：",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "操作重型机械",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "潜水",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "炮术",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "爆破",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "电子学 Ω",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学①",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学②",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "科学③",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "精神分析",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "考古学",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "读唇",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "锁匠",
+        "value": 1,
+        "occupation": false
+      },
+      {
+        "name": "驾驶：",
+        "value": 1,
+        "occupation": false
+      }
+    ],
+    "weapons": [
+      {
+        "name": "武器名称",
+        "detail": "类型",
+        "skill": "使用技能",
+        "damage": "伤害",
+        "range": "成功率",
+        "attacks": "",
+        "ammo": ""
+      },
+      {
+        "name": "无",
+        "detail": "肉搏",
+        "skill": "斗殴",
+        "damage": "1D3+DB",
+        "range": "25",
+        "attacks": "12",
+        "ammo": "5"
+      },
+      {
+        "name": "沙漠之鹰",
+        "detail": "-IMI 沙漠之鹰",
+        "skill": "手枪",
+        "damage": "1D10+1D6+3",
+        "range": "20",
+        "attacks": "10",
+        "ammo": "4"
+      }
+    ],
+    "assets": {
+      "credit_rating": "65%/32%/13%",
+      "living_standard": "小康",
+      "spending_level": "50",
+      "other_assets": "3.25万",
+      "cash": "325",
+      "unit": "美元",
+      "description": "小康级别已经可以享受奢侈品的舒适了。住所：真材实料的住地，也许会有一些仆人（管家，主妇，清洁工，园丁，等等）。乡下估计还有小别墅。会住昂贵的宾馆。旅行：头等舱。会买高档车或同等的交通工具。",
+      "asset_detail": "我非常节俭，花钱非常有纪律性。"
+    },
+    "appearance": "我从来不穿露胳膊露腿的衣服，一方面是教会的要求，另一方面是我身上有很多烧伤和刀疤的痕迹，都是雇佣兵时期留下来的",
+    "background": [
+      {
+        "label": "思想与信念",
+        "value": "只忠诚于自己"
+      },
+      {
+        "label": "伤口和疤痕",
+        "value": "身上比较多，脖颈处有一点点"
+      },
+      {
+        "label": "恐惧症和躁狂症",
+        "value": "性格比较敏感多疑，面对惊恐的事情可能会唤醒雇佣兵时期的记忆过激反应"
+      }
+    ]
+  }
+}

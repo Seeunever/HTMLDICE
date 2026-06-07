@@ -1,0 +1,141 @@
+{
+  "info": {
+    "label": "姓名",
+    "name": "莉莉娅",
+    "player": "十一",
+    "era": "现代",
+    "job": "医生",
+    "age": 32,
+    "gender": "女",
+    "residence": null,
+    "birthplace": null,
+    "year": 2023,
+    "month": "1月",
+    "day": "1日",
+    "time": "0：00",
+    "hp": 10,
+    "san": 99,
+    "mp": 16,
+    "mov": "移动力\nMOV",
+    "major_wound": 5,
+    "occupation_skills": "[医生（原作向）]的本职技能：急救、医学、外语（拉丁文）、心理学、科学（生物学，制药），任两种其他学术或个人特长。",
+    "STR": 50,
+    "DEX": 80,
+    "CON": 50,
+    "APP": 50,
+    "SIZ": 50,
+    "INT": 80,
+    "POW": null,
+    "EDU": null,
+    "bg_label": "背景故事",
+    "credit": "信用评级",
+    "credit_val": "其他资产",
+    "belief": "希波克拉底誓言",
+    "important": "学医生涯的导师",
+    "place": "大学",
+    "background_story": "形象描述"
+  },
+  "skills_count": 59,
+  "skills": [
+    {
+      "name": "会计",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "法律",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "人类学",
+      "value": 1,
+      "occupation": ""
+    },
+    {
+      "name": "图书馆使用",
+      "value": 20,
+      "occupation": "★"
+    },
+    {
+      "name": "估价",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "聆听",
+      "value": 20,
+      "occupation": ""
+    },
+    {
+      "name": "考古学",
+      "value": 1,
+      "occupation": ""
+    },
+    {
+      "name": "锁匠",
+      "value": 1,
+      "occupation": ""
+    },
+    {
+      "name": "技艺①",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "机械维修",
+      "value": 10,
+      "occupation": ""
+    },
+    {
+      "name": "技艺②",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "医学",
+      "value": 1,
+      "occupation": "★"
+    },
+    {
+      "name": "技艺③",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "博物学",
+      "value": 10,
+      "occupation": ""
+    },
+    {
+      "name": "取悦",
+      "value": 15,
+      "occupation": ""
+    },
+    {
+      "name": "导航",
+      "value": 10,
+      "occupation": ""
+    },
+    {
+      "name": "攀爬",
+      "value": 20,
+      "occupation": ""
+    },
+    {
+      "name": "神秘学",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "计算机使用 Ω",
+      "value": 5,
+      "occupation": ""
+    },
+    {
+      "name": "操作重型机械",
+      "value": 1,
+      "occupation": ""
+    }
+  ]
+}
