@@ -92,6 +92,11 @@ monsters.json                静态怪物图鉴
 - `GET /api/scene`
 - `POST /api/scene/image|token|sync-pcs|clear`（KP）
 
+### 房间时间线
+- `GET /api/timeline` — 房间内成员查看；KP 获得管理权限
+- `POST /api/timeline` — KP 新增手动时间线节点 `{ title, body? }`
+- `POST /api/timeline/update|delete|current|move` — KP 编辑、删除、设为当前、上下移动
+
 ### 线索手札
 - `GET /api/handouts?since=` — PL 看自己的；KP 看全部含已撤回
 - `POST /api/handouts` — KP 发放 `{ title, body, targets, image_b64? }`
@@ -109,6 +114,7 @@ monsters.json                静态怪物图鉴
   "next_roll_id": 1,
   "combat": { "active": true, "players": [], "monsters": [], "log": [] },
   "scene": { "image": "scenes/<id>/scene.jpg", "tokens": [] },
+  "timeline": { "entries": [], "current_entry_id": null, "next_entry_id": 1 },
   "handouts": [],
   "next_handout_id": 1,
   "last_handout_id": 0,
@@ -118,9 +124,10 @@ monsters.json                静态怪物图鉴
 
 ## 前端约定
 
-- 轮询间隔：`ROLL_POLL_MS` / `COMBAT_POLL_MS` / `SCENE_POLL_MS` / `HANDOUT_POLL_MS` = 2000ms
-- 面板：`appPanel`（投骰主页）、`combatPanel`、`scenePanel`、`handoutPanel`、`charPanel`、`playersPanel`
+- 轮询间隔：`ROLL_POLL_MS` / `COMBAT_POLL_MS` / `SCENE_POLL_MS` / `TIMELINE_POLL_MS` / `HANDOUT_POLL_MS` = 2000ms
+- 面板：`appPanel`（投骰主页）、`combatPanel`、`scenePanel`、`timelinePanel`、`handoutPanel`、`charPanel`、`playersPanel`
 - `canSecretRoll` = 房间内 KP；驱动暗骰、战斗/场景管理、手札发放
+- 时间线：PL 只读；仅房间 KP 可新增、编辑、删除、移动并设为当前节点
 - 战斗面板：仅 `updated_at` 变化时全量重绘，避免选中怪物被轮询冲掉
 - CoC7 大失败：**96–100**（`evaluate_skill_check` / 前端 `DICE.d100.critFail`）
 
@@ -132,7 +139,8 @@ monsters.json                静态怪物图鉴
 4. 人物卡 xlsx 导入、KP 改 HP/SAN
 5. 战斗：地图、玩家、怪物图鉴、回合、HP、技能检定、结束 HP 回写
 6. 场景地图：KP 上传背景、拖拽 PC/NPC 棋子，PL 只读
-7. 线索手札：KP 向指定/全体 PL 发文字+图，PL 未读角标
+7. 房间时间线：KP 手动控制剧情节点，PL 同步只读查看
+8. 线索手札：KP 向指定/全体 PL 发文字+图，PL 未读角标
 
 ## 常见坑
 
@@ -144,7 +152,6 @@ monsters.json                静态怪物图鉴
 
 ## 后续可做（未实现）
 
-- 统一房间时间线（骰点 + 战斗 log + 线索）
 - Nginx 80/443 反代（改善手机访问）
 - WebSocket 替代轮询
 - KP 暂离横幅、PL 体验打磨

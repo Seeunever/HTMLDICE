@@ -107,6 +107,7 @@
         <button id="deleteRoomBtn" type="button" class="btn-small room-delete-btn hidden">解散房间</button>
         <button id="combatBtn" type="button" class="btn-small btn-staff hidden">战斗</button>
         <button id="sceneBtn" type="button" class="btn-small hidden">场景地图</button>
+        <button id="timelineBtn" type="button" class="btn-small hidden">时间线</button>
         <button id="handoutBtn" type="button" class="btn-small handout-btn hidden">线索<span id="handoutBadge" class="handout-badge hidden"></span></button>
         <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
         <button id="charBtn" type="button" class="btn-small">人物卡</button>
@@ -130,6 +131,10 @@
       <div id="sceneEntryRow" class="combat-entry-row scene-entry-row hidden">
         <button id="sceneEntryBtn" type="button" class="combat-entry-btn scene-entry-btn">场景地图</button>
         <span id="sceneEntryHint" class="combat-entry-hint">KP 可上传背景图并放置 PC / NPC 棋子</span>
+      </div>
+      <div id="timelineEntryRow" class="combat-entry-row timeline-entry-row hidden">
+        <button id="timelineEntryBtn" type="button" class="combat-entry-btn timeline-entry-btn">时间线</button>
+        <span id="timelineEntryHint" class="combat-entry-hint">KP 可手动推进当前剧情节点</span>
       </div>
       <div class="context-row">
         <div class="map-section">
@@ -257,6 +262,38 @@
       <input id="sceneFileInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" aria-hidden="true">
     </div>
 
+    <div id="timelinePanel" class="timeline-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">房间时间线</div>
+          <div id="timelineSubtitle" class="char-subtitle">KP 手动控制剧情推进 · PL 同步查看</div>
+        </div>
+        <button id="timelineBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="timelineCurrent" class="timeline-current">
+        <div class="timeline-empty">加载时间线…</div>
+      </div>
+      <div id="timelineKpForm" class="timeline-kp-form hidden">
+        <div id="timelineFormTitle" class="handout-form-title">添加时间线节点</div>
+        <label class="handout-field">
+          <span class="handout-field-label">标题</span>
+          <input id="timelineTitleInput" type="text" class="handout-input" maxlength="80" placeholder="例如：抵达戴斯宅邸">
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">正文（可选）</span>
+          <textarea id="timelineBodyInput" class="handout-textarea timeline-textarea" maxlength="4000" placeholder="本节点的剧情摘要、当前目标或 KP 备注…"></textarea>
+        </label>
+        <div class="timeline-form-actions">
+          <button id="timelineSubmitBtn" type="button" class="handout-submit-btn">添加节点</button>
+          <button id="timelineCancelEditBtn" type="button" class="btn-small hidden">取消编辑</button>
+        </div>
+        <div id="timelineFormError" class="handout-form-error"></div>
+      </div>
+      <div id="timelineList" class="timeline-list">
+        <div class="timeline-empty">加载中…</div>
+      </div>
+    </div>
+
     <div id="handoutPanel" class="handout-panel hidden">
       <div class="char-topbar">
         <div>
@@ -333,7 +370,7 @@
       <div id="roomDeleteTitle" class="combat-end-title">解散房间</div>
       <p class="combat-end-desc">
         确定永久解散房间「<strong id="roomDeleteName"></strong>」？
-        场景、战斗与骰点记录将被删除，房间内玩家将被移出。
+        场景、战斗、时间线与骰点记录将被删除，房间内玩家将被移出。
       </p>
       <div class="combat-end-actions">
         <button id="roomDeleteCancelBtn" type="button" class="btn-small">取消</button>
@@ -462,6 +499,22 @@
     const sceneEntryBtn = document.getElementById('sceneEntryBtn');
     const sceneEntryHint = document.getElementById('sceneEntryHint');
     const sceneFileInput = document.getElementById('sceneFileInput');
+    const timelineBtn = document.getElementById('timelineBtn');
+    const timelinePanel = document.getElementById('timelinePanel');
+    const timelineSubtitle = document.getElementById('timelineSubtitle');
+    const timelineBackBtn = document.getElementById('timelineBackBtn');
+    const timelineCurrent = document.getElementById('timelineCurrent');
+    const timelineKpForm = document.getElementById('timelineKpForm');
+    const timelineFormTitle = document.getElementById('timelineFormTitle');
+    const timelineTitleInput = document.getElementById('timelineTitleInput');
+    const timelineBodyInput = document.getElementById('timelineBodyInput');
+    const timelineSubmitBtn = document.getElementById('timelineSubmitBtn');
+    const timelineCancelEditBtn = document.getElementById('timelineCancelEditBtn');
+    const timelineFormError = document.getElementById('timelineFormError');
+    const timelineList = document.getElementById('timelineList');
+    const timelineEntryRow = document.getElementById('timelineEntryRow');
+    const timelineEntryBtn = document.getElementById('timelineEntryBtn');
+    const timelineEntryHint = document.getElementById('timelineEntryHint');
     const handoutBtn = document.getElementById('handoutBtn');
     const handoutBadge = document.getElementById('handoutBadge');
     const handoutPanel = document.getElementById('handoutPanel');
@@ -523,6 +576,10 @@
     let sceneState = null;
     let sceneCanManage = false;
     let sceneDragState = null;
+    let timelinePollTimer = null;
+    let timelineState = null;
+    let timelineCanManage = false;
+    let timelineEditingId = null;
     let handoutPollTimer = null;
     let handoutsCache = [];
     let lastHandoutId = 0;
@@ -530,6 +587,7 @@
     const ROLL_POLL_MS = 2000;
     const COMBAT_POLL_MS = 2000;
     const SCENE_POLL_MS = 2000;
+    const TIMELINE_POLL_MS = 2000;
     const HANDOUT_POLL_MS = 2000;
 
     const CHECK_RESULTS = {
@@ -618,6 +676,7 @@
       stopRollPolling();
       stopCombatPolling();
       stopScenePolling();
+      stopTimelinePolling();
       stopHandoutPolling();
       authPanel.classList.remove('hidden');
       roomPanel.classList.add('hidden');
@@ -626,6 +685,7 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
       pcPanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
@@ -641,6 +701,9 @@
       combatCanView = false;
       sceneState = null;
       sceneCanManage = false;
+      timelineState = null;
+      timelineCanManage = false;
+      timelineEditingId = null;
       handoutsCache = [];
       lastHandoutId = 0;
       pendingHandoutImageFile = null;
@@ -680,6 +743,7 @@
       stopRollPolling();
       stopCombatPolling();
       stopScenePolling();
+      stopTimelinePolling();
       stopHandoutPolling();
       authPanel.classList.add('hidden');
       pcPanel.classList.remove('hidden');
@@ -689,6 +753,7 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       pcPlDisplay.textContent = username || usernameDisplay.textContent;
@@ -814,6 +879,8 @@
       stopRollPolling();
       stopCombatPolling();
       stopScenePolling();
+      stopTimelinePolling();
+      stopHandoutPolling();
       authPanel.classList.add('hidden');
       pcPanel.classList.add('hidden');
       roomPanel.classList.remove('hidden');
@@ -822,6 +889,8 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       roomUsernameDisplay.textContent = username;
       updateRoomLobbyRole(role);
@@ -946,6 +1015,7 @@
       stopRollPolling();
       stopCombatPolling();
       stopScenePolling();
+      stopTimelinePolling();
       stopHandoutPolling();
       handoutsCache = [];
       lastHandoutId = 0;
@@ -954,6 +1024,9 @@
       combatState = null;
       sceneState = null;
       sceneCanManage = false;
+      timelineState = null;
+      timelineCanManage = false;
+      timelineEditingId = null;
       showRoomLobby(usernameDisplay.textContent, currentUserRole);
     }
 
@@ -968,6 +1041,8 @@
       startHandoutPolling();
       refreshCombatAccess();
       refreshSceneAccess();
+      refreshTimelineState();
+      startTimelinePolling();
     }
 
     async function refreshRoomUI() {
@@ -992,6 +1067,7 @@
       `;
       updateCombatEntry();
       updateSceneEntry();
+      updateTimelineEntry();
       updateRoomToolbar();
     }
 
@@ -1030,6 +1106,7 @@
       stopRollPolling();
       stopCombatPolling();
       stopScenePolling();
+      stopTimelinePolling();
       stopHandoutPolling();
       handoutsCache = [];
       lastHandoutId = 0;
@@ -1038,6 +1115,9 @@
       combatState = null;
       sceneState = null;
       sceneCanManage = false;
+      timelineState = null;
+      timelineCanManage = false;
+      timelineEditingId = null;
       const username = usernameDisplay.textContent || roomUsernameDisplay.textContent;
       showRoomLobby(username, currentUserRole);
       if (wasInDeletedRoom) {
@@ -1188,6 +1268,293 @@
         mergeHandouts(data.handouts, false);
       }
       lastHandoutId = data.last_handout_id || lastHandoutId;
+    }
+
+    function stopTimelinePolling() {
+      if (timelinePollTimer) {
+        clearInterval(timelinePollTimer);
+        timelinePollTimer = null;
+      }
+    }
+
+    function startTimelinePolling() {
+      stopTimelinePolling();
+      if (!currentRoom) return;
+      timelinePollTimer = setInterval(refreshTimelineState, TIMELINE_POLL_MS);
+    }
+
+    function getTimelineEntries() {
+      return timelineState?.entries || [];
+    }
+
+    function getCurrentTimelineEntry() {
+      const currentId = timelineState?.current_entry_id;
+      if (currentId == null) return null;
+      return getTimelineEntries().find((entry) => entry.id === currentId) || null;
+    }
+
+    function updateTimelineButton() {
+      timelineBtn.classList.toggle('hidden', !currentRoom);
+    }
+
+    function updateTimelineEntry() {
+      updateTimelineButton();
+      const entries = getTimelineEntries();
+      const current = getCurrentTimelineEntry();
+      const isKp = !!timelineCanManage || !!canSecretRoll;
+      const showEntry = !!currentRoom && (isKp || entries.length > 0);
+
+      if (!showEntry) {
+        timelineEntryRow.classList.add('hidden');
+        return;
+      }
+
+      timelineEntryRow.classList.remove('hidden');
+      if (current) {
+        timelineEntryBtn.textContent = isKp ? '推进时间线' : '查看时间线';
+        timelineEntryHint.textContent = `当前：${current.title}`;
+      } else if (isKp) {
+        timelineEntryBtn.textContent = '创建时间线';
+        timelineEntryHint.textContent = '添加剧情节点，并由 KP 手动设为当前';
+      } else {
+        timelineEntryBtn.textContent = '查看时间线';
+        timelineEntryHint.textContent = 'KP 尚未指定当前节点';
+      }
+    }
+
+    async function refreshTimelineState(forceRender = false) {
+      if (!currentRoom) {
+        timelineState = null;
+        timelineCanManage = false;
+        updateTimelineEntry();
+        stopTimelinePolling();
+        return;
+      }
+      const previousUpdated = timelineState?.updated_at;
+      const { data } = await api('/api/timeline');
+      if (!data.ok) return;
+      timelineCanManage = !!data.can_manage;
+      timelineState = data.timeline || { entries: [], current_entry_id: null, updated_at: null };
+      updateTimelineEntry();
+      if (!timelinePanel.classList.contains('hidden')) {
+        const changed = previousUpdated !== timelineState?.updated_at;
+        if (forceRender || changed || !timelineList.childElementCount) {
+          renderTimelinePanel(data);
+        }
+      }
+    }
+
+    async function showTimelineView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      timelinePanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+      timelineCurrent.innerHTML = '<div class="timeline-empty">加载时间线…</div>';
+      timelineList.innerHTML = '<div class="timeline-empty">加载中…</div>';
+      await refreshTimelineState(true);
+    }
+
+    function resetTimelineForm() {
+      timelineEditingId = null;
+      timelineTitleInput.value = '';
+      timelineBodyInput.value = '';
+      timelineFormError.textContent = '';
+      timelineFormTitle.textContent = '添加时间线节点';
+      timelineSubmitBtn.textContent = '添加节点';
+      timelineCancelEditBtn.classList.add('hidden');
+    }
+
+    function renderTimelineCurrent() {
+      const current = getCurrentTimelineEntry();
+      if (!current) {
+        timelineCurrent.innerHTML = `
+          <div class="timeline-current-card empty">
+            <div class="timeline-current-label">当前节点</div>
+            <div class="timeline-current-title">${timelineCanManage ? '尚未指定' : '等待 KP 推进'}</div>
+            <div class="timeline-current-body">${timelineCanManage ? '添加节点后，可点击「设为当前」控制玩家看到的进度。' : 'KP 尚未设置当前时间线节点。'}</div>
+          </div>
+        `;
+        return;
+      }
+
+      timelineCurrent.innerHTML = `
+        <div class="timeline-current-card">
+          <div class="timeline-current-label">当前节点</div>
+          <div class="timeline-current-title">${escapeHtml(current.title)}</div>
+          <div class="timeline-current-meta">${escapeHtml(formatRollTime(current.updated_at || current.created_at))}</div>
+          <div class="timeline-current-body">${escapeHtml(current.body || '（无正文）')}</div>
+        </div>
+      `;
+    }
+
+    function renderTimelinePanel(data) {
+      timelineCanManage = !!data.can_manage;
+      timelineState = data.timeline || timelineState || { entries: [], current_entry_id: null, updated_at: null };
+      timelineSubtitle.textContent = timelineCanManage
+        ? 'KP 手动控制剧情节点 · PL 同步查看'
+        : '只读视图 · 当前节点由 KP 控制';
+      timelineKpForm.classList.toggle('hidden', !timelineCanManage);
+      renderTimelineCurrent();
+      renderTimelineList();
+      updateTimelineEntry();
+    }
+
+    function renderTimelineList() {
+      const entries = getTimelineEntries();
+      const currentId = timelineState?.current_entry_id;
+      if (!entries.length) {
+        timelineList.innerHTML = `<div class="timeline-empty">${timelineCanManage ? '尚未添加时间线节点' : 'KP 尚未创建时间线'}</div>`;
+        return;
+      }
+
+      timelineList.replaceChildren();
+      entries.forEach((entry, index) => {
+        const row = document.createElement('div');
+        row.className = `timeline-row${entry.id === currentId ? ' current' : ''}`;
+        const meta = [
+          `#${index + 1}`,
+          formatRollTime(entry.created_at),
+          entry.created_by ? `KP ${entry.created_by}` : '',
+        ].filter(Boolean).join(' · ');
+        row.innerHTML = `
+          <div class="timeline-marker"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-head">
+              <span class="timeline-card-title">${escapeHtml(entry.title)}</span>
+              ${entry.id === currentId ? '<span class="timeline-card-tag">当前</span>' : ''}
+            </div>
+            <div class="timeline-card-meta">${escapeHtml(meta)}</div>
+            <div class="timeline-card-body">${escapeHtml(entry.body || '（无正文）')}</div>
+            ${timelineCanManage ? `
+              <div class="timeline-actions">
+                <button type="button" class="btn-small timeline-action-btn" data-action="current" data-id="${entry.id}" ${entry.id === currentId ? 'disabled' : ''}>设为当前</button>
+                <button type="button" class="btn-small timeline-action-btn" data-action="edit" data-id="${entry.id}">编辑</button>
+                <button type="button" class="btn-small timeline-action-btn" data-action="up" data-id="${entry.id}" ${index === 0 ? 'disabled' : ''}>上移</button>
+                <button type="button" class="btn-small timeline-action-btn" data-action="down" data-id="${entry.id}" ${index === entries.length - 1 ? 'disabled' : ''}>下移</button>
+                <button type="button" class="btn-small timeline-action-btn danger" data-action="delete" data-id="${entry.id}">删除</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        timelineList.appendChild(row);
+      });
+
+      if (timelineCanManage) {
+        bindTimelineActions();
+      }
+    }
+
+    function bindTimelineActions() {
+      timelineList.querySelectorAll('.timeline-action-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const action = btn.dataset.action;
+          if (action === 'current') setTimelineCurrent(id);
+          if (action === 'edit') startEditTimelineEntry(id);
+          if (action === 'up') moveTimelineEntry(id, 'up');
+          if (action === 'down') moveTimelineEntry(id, 'down');
+          if (action === 'delete') deleteTimelineEntry(id);
+        });
+      });
+    }
+
+    function startEditTimelineEntry(entryId) {
+      const entry = getTimelineEntries().find((item) => item.id === entryId);
+      if (!entry) return;
+      timelineEditingId = entryId;
+      timelineTitleInput.value = entry.title || '';
+      timelineBodyInput.value = entry.body || '';
+      timelineFormError.textContent = '';
+      timelineFormTitle.textContent = '编辑时间线节点';
+      timelineSubmitBtn.textContent = '保存修改';
+      timelineCancelEditBtn.classList.remove('hidden');
+      timelineTitleInput.focus();
+    }
+
+    async function submitTimelineEntry() {
+      if (!timelineCanManage) return;
+      timelineFormError.textContent = '';
+      const title = timelineTitleInput.value.trim();
+      const body = timelineBodyInput.value.trim();
+      if (!title) {
+        timelineFormError.textContent = '请输入时间线标题';
+        return;
+      }
+
+      const payload = { title, body };
+      let endpoint = '/api/timeline';
+      if (timelineEditingId != null) {
+        endpoint = '/api/timeline/update';
+        payload.id = timelineEditingId;
+      }
+
+      timelineSubmitBtn.disabled = true;
+      const { data } = await api(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      timelineSubmitBtn.disabled = false;
+
+      if (!data.ok) {
+        timelineFormError.textContent = data.error || '保存失败';
+        return;
+      }
+
+      timelineState = data.timeline;
+      resetTimelineForm();
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
+    }
+
+    async function setTimelineCurrent(entryId) {
+      if (!timelineCanManage) return;
+      const { data } = await api('/api/timeline/current', {
+        method: 'POST',
+        body: JSON.stringify({ id: entryId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '设置失败');
+        return;
+      }
+      timelineState = data.timeline;
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
+    }
+
+    async function moveTimelineEntry(entryId, direction) {
+      if (!timelineCanManage) return;
+      const { data } = await api('/api/timeline/move', {
+        method: 'POST',
+        body: JSON.stringify({ id: entryId, direction }),
+      });
+      if (!data.ok) {
+        alert(data.error || '移动失败');
+        return;
+      }
+      timelineState = data.timeline;
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
+    }
+
+    async function deleteTimelineEntry(entryId) {
+      if (!timelineCanManage) return;
+      const entry = getTimelineEntries().find((item) => item.id === entryId);
+      if (!entry) return;
+      if (!confirm(`确定删除时间线节点「${entry.title || entry.id}」？`)) return;
+      const { data } = await api('/api/timeline/delete', {
+        method: 'POST',
+        body: JSON.stringify({ id: entryId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '删除失败');
+        return;
+      }
+      if (timelineEditingId === entryId) {
+        resetTimelineForm();
+      }
+      timelineState = data.timeline;
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
     }
 
     function formatHandoutTargets(targets) {
@@ -1410,6 +1777,7 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       handoutPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
 
@@ -1709,6 +2077,7 @@
       charPanel.classList.add('hidden');
       playersPanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       usernameDisplay.textContent = username;
       updateRoleUI(role);
@@ -1726,6 +2095,7 @@
         refreshRoomUI();
         refreshCombatAccess();
         refreshSceneAccess();
+        refreshTimelineState();
       }
     }
 
@@ -1809,6 +2179,7 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       scenePanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
       sceneContent.innerHTML = '<div class="scene-empty">加载场景中…</div>';
@@ -2131,6 +2502,7 @@
       playersPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       combatPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
       await ensureMonsterTemplates();
@@ -2806,6 +3178,7 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
       charPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
@@ -2816,6 +3189,7 @@
       charPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
       playersPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
@@ -2826,6 +3200,7 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
       appPanel.classList.remove('hidden');
       cardEl.classList.remove('sheet-mode');
@@ -3403,6 +3778,7 @@
       stopRollPolling();
       stopCombatPolling();
       stopScenePolling();
+      stopTimelinePolling();
       stopHandoutPolling();
       await api('/api/room/leave', { method: 'POST', body: '{}' }).catch(() => {});
       await api('/api/logout', { method: 'POST', body: '{}' });
@@ -3416,6 +3792,11 @@
     sceneBtn.addEventListener('click', showSceneView);
     sceneEntryBtn.addEventListener('click', showSceneView);
     sceneBackBtn.addEventListener('click', showDiceView);
+    timelineBtn.addEventListener('click', showTimelineView);
+    timelineEntryBtn.addEventListener('click', showTimelineView);
+    timelineBackBtn.addEventListener('click', showDiceView);
+    timelineSubmitBtn.addEventListener('click', submitTimelineEntry);
+    timelineCancelEditBtn.addEventListener('click', resetTimelineForm);
     handoutBtn.addEventListener('click', showHandoutView);
     handoutBackBtn.addEventListener('click', showDiceView);
     handoutSubmitBtn.addEventListener('click', submitHandout);

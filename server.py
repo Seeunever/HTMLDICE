@@ -616,6 +616,9 @@ SCENE_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 SCENE_MAX_BYTES = 5 * 1024 * 1024
 HANDOUT_TITLE_MAX = 80
 HANDOUT_BODY_MAX = 8000
+TIMELINE_TITLE_MAX = 80
+TIMELINE_BODY_MAX = 4000
+TIMELINE_MAX_ENTRIES = 200
 SCENE_MIME_EXTS = {
     "image/png": ".png",
     "image/jpeg": ".jpg",
@@ -717,6 +720,87 @@ def ensure_room_handouts(room):
     room.setdefault("last_handout_id", 0)
     room.setdefault("handout_reads", {})
     return room
+
+
+def ensure_room_timeline(room):
+    timeline = room.get("timeline")
+    if not isinstance(timeline, dict):
+        timeline = {"entries": timeline if isinstance(timeline, list) else []}
+        room["timeline"] = timeline
+
+    entries = timeline.get("entries")
+    if not isinstance(entries, list):
+        entries = []
+        timeline["entries"] = entries
+
+    normalized = []
+    max_id = 0
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            continue
+        try:
+            entry_id = int(entry.get("id", index + 1))
+        except (TypeError, ValueError):
+            entry_id = index + 1
+        entry["id"] = entry_id
+        entry.setdefault("title", "未命名节点")
+        entry.setdefault("body", "")
+        entry.setdefault("created_at", None)
+        entry.setdefault("created_by", "")
+        entry.setdefault("updated_at", None)
+        normalized.append(entry)
+        max_id = max(max_id, entry_id)
+
+    timeline["entries"] = normalized
+    try:
+        next_id = int(timeline.get("next_entry_id", 1))
+    except (TypeError, ValueError):
+        next_id = 1
+    timeline["next_entry_id"] = max(next_id, max_id + 1)
+
+    current_id = timeline.get("current_entry_id")
+    if current_id is not None:
+        try:
+            current_id = int(current_id)
+        except (TypeError, ValueError):
+            current_id = None
+    if current_id is not None and not any(entry.get("id") == current_id for entry in normalized):
+        current_id = None
+    timeline["current_entry_id"] = current_id
+    timeline.setdefault("updated_at", None)
+    return timeline
+
+
+def timeline_entry_to_client(entry):
+    return {
+        "id": entry.get("id"),
+        "title": entry.get("title", ""),
+        "body": entry.get("body", ""),
+        "created_at": entry.get("created_at"),
+        "created_by": entry.get("created_by"),
+        "updated_at": entry.get("updated_at"),
+    }
+
+
+def timeline_to_client(timeline):
+    timeline = timeline or {}
+    return {
+        "entries": [timeline_entry_to_client(entry) for entry in timeline.get("entries", [])],
+        "current_entry_id": timeline.get("current_entry_id"),
+        "updated_at": timeline.get("updated_at"),
+    }
+
+
+def normalize_timeline_entry_payload(body):
+    title = str(body.get("title", "")).strip()
+    entry_body = str(body.get("body", "")).strip()
+    if not title:
+        return None, None, "请输入时间线标题"
+    if len(title) > TIMELINE_TITLE_MAX:
+        return None, None, f"标题不能超过 {TIMELINE_TITLE_MAX} 字"
+    if len(entry_body) > TIMELINE_BODY_MAX:
+        return None, None, f"正文不能超过 {TIMELINE_BODY_MAX} 字"
+    return title, entry_body, None
 
 
 def handout_visible_to(handout, username, is_kp):
@@ -1129,6 +1213,33 @@ class Handler(SimpleHTTPRequestHandler):
             )
             return
 
+        if path == "/api/timeline":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            if not room_id or room_id not in rooms:
+                json_response(self, 400, {"ok": False, "error": "请先加入房间"})
+                return
+            room = rooms[room_id]
+            if not user_in_room(room, user):
+                json_response(self, 403, {"ok": False, "error": "不在此房间"})
+                return
+            is_kp = room.get("kp") == user
+            timeline = ensure_room_timeline(room)
+            json_response(
+                self,
+                200,
+                {
+                    "ok": True,
+                    "is_kp": is_kp,
+                    "can_manage": is_kp,
+                    "timeline": timeline_to_client(timeline),
+                },
+            )
+            return
+
         if path == "/api/room/rolls":
             user = get_current_user(self)
             if not user:
@@ -1334,6 +1445,12 @@ class Handler(SimpleHTTPRequestHandler):
                     "rolls": [],
                     "last_roll_id": 0,
                     "next_roll_id": 1,
+                    "timeline": {
+                        "entries": [],
+                        "next_entry_id": 1,
+                        "current_entry_id": None,
+                        "updated_at": None,
+                    },
                 }
                 user_rooms[user] = room_id
                 save_rooms()
@@ -1543,6 +1660,198 @@ class Handler(SimpleHTTPRequestHandler):
                 save_rooms()
 
             json_response(self, 200, {"ok": True, "roll": roll_to_client(roll_record)})
+            return
+
+        if path == "/api/timeline":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            title, entry_body, payload_error = normalize_timeline_entry_payload(body)
+            if payload_error:
+                json_response(self, 400, {"ok": False, "error": payload_error})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                timeline = ensure_room_timeline(room)
+                entries = timeline.setdefault("entries", [])
+                if len(entries) >= TIMELINE_MAX_ENTRIES:
+                    json_response(self, 400, {"ok": False, "error": f"时间线最多保留 {TIMELINE_MAX_ENTRIES} 个节点"})
+                    return
+                entry_id = int(timeline.get("next_entry_id", 1))
+                now = datetime.now(timezone.utc).isoformat()
+                entry = {
+                    "id": entry_id,
+                    "title": title,
+                    "body": entry_body,
+                    "created_at": now,
+                    "created_by": user,
+                    "updated_at": now,
+                }
+                entries.append(entry)
+                timeline["next_entry_id"] = entry_id + 1
+                if timeline.get("current_entry_id") is None:
+                    timeline["current_entry_id"] = entry_id
+                timeline["updated_at"] = now
+                save_rooms()
+                saved = timeline_to_client(timeline)
+
+            json_response(self, 200, {"ok": True, "timeline": saved})
+            return
+
+        if path == "/api/timeline/update":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            try:
+                entry_id = int(body.get("id"))
+            except (TypeError, ValueError):
+                json_response(self, 400, {"ok": False, "error": "无效的时间线节点 ID"})
+                return
+
+            title, entry_body, payload_error = normalize_timeline_entry_payload(body)
+            if payload_error:
+                json_response(self, 400, {"ok": False, "error": payload_error})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                timeline = ensure_room_timeline(room)
+                entry = next((item for item in timeline.get("entries", []) if item.get("id") == entry_id), None)
+                if not entry:
+                    json_response(self, 404, {"ok": False, "error": "时间线节点不存在"})
+                    return
+                now = datetime.now(timezone.utc).isoformat()
+                entry["title"] = title
+                entry["body"] = entry_body
+                entry["updated_at"] = now
+                timeline["updated_at"] = now
+                save_rooms()
+                saved = timeline_to_client(timeline)
+
+            json_response(self, 200, {"ok": True, "timeline": saved})
+            return
+
+        if path == "/api/timeline/delete":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            try:
+                entry_id = int(body.get("id"))
+            except (TypeError, ValueError):
+                json_response(self, 400, {"ok": False, "error": "无效的时间线节点 ID"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                timeline = ensure_room_timeline(room)
+                entries = timeline.get("entries", [])
+                new_entries = [item for item in entries if item.get("id") != entry_id]
+                if len(new_entries) == len(entries):
+                    json_response(self, 404, {"ok": False, "error": "时间线节点不存在"})
+                    return
+                timeline["entries"] = new_entries
+                if timeline.get("current_entry_id") == entry_id:
+                    timeline["current_entry_id"] = new_entries[-1].get("id") if new_entries else None
+                timeline["updated_at"] = datetime.now(timezone.utc).isoformat()
+                save_rooms()
+                saved = timeline_to_client(timeline)
+
+            json_response(self, 200, {"ok": True, "timeline": saved})
+            return
+
+        if path == "/api/timeline/current":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            raw_id = body.get("id")
+            entry_id = None
+            if raw_id not in (None, ""):
+                try:
+                    entry_id = int(raw_id)
+                except (TypeError, ValueError):
+                    json_response(self, 400, {"ok": False, "error": "无效的时间线节点 ID"})
+                    return
+
+            with data_lock:
+                room = rooms[room_id]
+                timeline = ensure_room_timeline(room)
+                if entry_id is not None and not any(item.get("id") == entry_id for item in timeline.get("entries", [])):
+                    json_response(self, 404, {"ok": False, "error": "时间线节点不存在"})
+                    return
+                timeline["current_entry_id"] = entry_id
+                timeline["updated_at"] = datetime.now(timezone.utc).isoformat()
+                save_rooms()
+                saved = timeline_to_client(timeline)
+
+            json_response(self, 200, {"ok": True, "timeline": saved})
+            return
+
+        if path == "/api/timeline/move":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            try:
+                entry_id = int(body.get("id"))
+            except (TypeError, ValueError):
+                json_response(self, 400, {"ok": False, "error": "无效的时间线节点 ID"})
+                return
+            direction = str(body.get("direction", "")).strip()
+            if direction not in ("up", "down"):
+                json_response(self, 400, {"ok": False, "error": "无效的移动方向"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                timeline = ensure_room_timeline(room)
+                entries = timeline.get("entries", [])
+                index = next((idx for idx, item in enumerate(entries) if item.get("id") == entry_id), None)
+                if index is None:
+                    json_response(self, 404, {"ok": False, "error": "时间线节点不存在"})
+                    return
+                target_index = index - 1 if direction == "up" else index + 1
+                if 0 <= target_index < len(entries):
+                    entries[index], entries[target_index] = entries[target_index], entries[index]
+                    timeline["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    save_rooms()
+                saved = timeline_to_client(timeline)
+
+            json_response(self, 200, {"ok": True, "timeline": saved})
             return
 
         if path == "/api/combat/start":
