@@ -9,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="cthulhu.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23030806' stroke='%23c9a227' stroke-width='1'/%3E%3Cellipse cx='16' cy='17' rx='4' ry='5' fill='%236fcf97'/%3E%3Ccircle cx='16' cy='17' r='1.5' fill='%23030806'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="cthulhu.css?v=20260708-ui-mobile-2">
+  <link rel="icon" href="assets/apple-touch-icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180">
 </head>
 <body>
   <div class="cosmos" aria-hidden="true">
@@ -51,6 +52,17 @@
         <button type="button" class="auth-tab" data-mode="register">注册</button>
       </div>
       <input id="usernameInput" class="auth-input" type="text" maxlength="20" placeholder="请输入用户名" autocomplete="username">
+      <div id="registerRoleSection" class="auth-role-section hidden" aria-label="选择账号身份">
+        <div class="auth-role-title">创建为</div>
+        <label class="auth-role-option">
+          <input type="radio" name="registerRole" value="player" checked>
+          <span>PL 玩家</span>
+        </label>
+        <label class="auth-role-option">
+          <input type="radio" name="registerRole" value="kp">
+          <span>KP 主持人</span>
+        </label>
+      </div>
       <button id="authSubmitBtn" type="button">登录</button>
       <p id="authError" class="auth-error"></p>
     </div>
@@ -100,18 +112,23 @@
 
     <div id="appPanel" class="hidden">
       <div class="user-bar">
-        <span>欢迎，<strong id="usernameDisplay"></strong><span id="roleBadge"></span><span id="pcBadge" class="pc-badge"></span></span>
-        <button id="switchPcBtn" type="button" class="btn-small hidden">切换人物卡</button>
-        <span id="roomBadge" class="room-badge"></span>
-        <button id="leaveRoomBtn" type="button" class="btn-small">离开房间</button>
-        <button id="deleteRoomBtn" type="button" class="btn-small room-delete-btn hidden">解散房间</button>
-        <button id="combatBtn" type="button" class="btn-small btn-staff hidden">战斗</button>
-        <button id="sceneBtn" type="button" class="btn-small hidden">场景地图</button>
-        <button id="timelineBtn" type="button" class="btn-small hidden">时间线</button>
-        <button id="handoutBtn" type="button" class="btn-small handout-btn hidden">线索<span id="handoutBadge" class="handout-badge hidden"></span></button>
-        <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
-        <button id="charBtn" type="button" class="btn-small">人物卡</button>
-        <button id="logoutBtn" type="button" class="btn-small">退出</button>
+        <div class="user-meta">
+          <span>欢迎，<strong id="usernameDisplay"></strong><span id="roleBadge"></span><span id="pcBadge" class="pc-badge"></span></span>
+          <span id="roomBadge" class="room-badge"></span>
+        </div>
+        <div class="user-actions">
+          <button id="switchPcBtn" type="button" class="btn-small hidden">切换人物卡</button>
+          <button id="leaveRoomBtn" type="button" class="btn-small">离开房间</button>
+          <button id="deleteRoomBtn" type="button" class="btn-small room-delete-btn hidden">解散房间</button>
+          <button id="combatBtn" type="button" class="btn-small btn-staff hidden">战斗</button>
+          <button id="sceneBtn" type="button" class="btn-small hidden">场景地图</button>
+          <button id="timelineBtn" type="button" class="btn-small hidden">时间线</button>
+          <button id="handoutBtn" type="button" class="btn-small handout-btn hidden">线索<span id="handoutBadge" class="handout-badge hidden"></span></button>
+          <button id="backpackBtn" type="button" class="btn-small hidden">背包</button>
+          <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
+          <button id="charBtn" type="button" class="btn-small">人物卡</button>
+          <button id="logoutBtn" type="button" class="btn-small">退出</button>
+        </div>
       </div>
       <div id="pcStatusBar" class="pc-status-bar hidden">
         <div class="pc-status-chip pc-status-hp">
@@ -334,6 +351,35 @@
         </div>
       </div>
     </div>
+
+    <div id="backpackPanel" class="backpack-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">背包</div>
+          <div id="backpackSubtitle" class="char-subtitle">KP 生成物品 · PL 查看自己的背包</div>
+        </div>
+        <button id="backpackBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="backpackKpForm" class="backpack-kp-form hidden">
+        <div class="handout-form-title">生成物品并放入背包</div>
+        <label class="handout-field">
+          <span class="handout-field-label">放入玩家</span>
+          <select id="backpackOwnerSelect" class="handout-input"></select>
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">物品描述</span>
+          <textarea id="backpackDescInput" class="handout-textarea backpack-textarea" maxlength="600" placeholder="例如：一把锈迹斑斑的钥匙"></textarea>
+        </label>
+        <button id="backpackGenerateBtn" type="button" class="handout-submit-btn">生成物品并放入背包</button>
+        <div id="backpackFormError" class="handout-form-error"></div>
+      </div>
+      <div id="backpackListSection" class="backpack-list-section">
+        <div id="backpackListTitle" class="handout-list-title">我的背包</div>
+        <div id="backpackList" class="backpack-list">
+          <div class="handout-empty">加载中…</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="portraitModal" class="portrait-modal hidden" aria-hidden="true">
@@ -411,6 +457,7 @@
     const authPanel = document.getElementById('authPanel');
     const appPanel = document.getElementById('appPanel');
     const usernameInput = document.getElementById('usernameInput');
+    const registerRoleSection = document.getElementById('registerRoleSection');
     const authSubmitBtn = document.getElementById('authSubmitBtn');
     const authError = document.getElementById('authError');
     const usernameDisplay = document.getElementById('usernameDisplay');
@@ -537,6 +584,17 @@
     const handoutDetailMeta = document.getElementById('handoutDetailMeta');
     const handoutDetailBody = document.getElementById('handoutDetailBody');
     const handoutDetailImg = document.getElementById('handoutDetailImg');
+    const backpackBtn = document.getElementById('backpackBtn');
+    const backpackPanel = document.getElementById('backpackPanel');
+    const backpackSubtitle = document.getElementById('backpackSubtitle');
+    const backpackBackBtn = document.getElementById('backpackBackBtn');
+    const backpackKpForm = document.getElementById('backpackKpForm');
+    const backpackOwnerSelect = document.getElementById('backpackOwnerSelect');
+    const backpackDescInput = document.getElementById('backpackDescInput');
+    const backpackGenerateBtn = document.getElementById('backpackGenerateBtn');
+    const backpackFormError = document.getElementById('backpackFormError');
+    const backpackListTitle = document.getElementById('backpackListTitle');
+    const backpackList = document.getElementById('backpackList');
     const pcPanel = document.getElementById('pcPanel');
     const pcList = document.getElementById('pcList');
     const pcPlDisplay = document.getElementById('pcPlDisplay');
@@ -582,6 +640,7 @@
     let timelineEditingId = null;
     let handoutPollTimer = null;
     let handoutsCache = [];
+    let backpacksCache = [];
     let lastHandoutId = 0;
     let pendingHandoutImageFile = null;
     const ROLL_POLL_MS = 2000;
@@ -668,6 +727,7 @@
       authTabs.forEach((tab) => {
         tab.classList.toggle('active', tab.dataset.mode === mode);
       });
+      registerRoleSection.classList.toggle('hidden', mode !== 'register');
       authSubmitBtn.textContent = mode === 'login' ? '登录' : '注册';
       authError.textContent = '';
     }
@@ -2220,6 +2280,20 @@
           </div>
         `
         : '';
+      const generator = canManage
+        ? `
+          <div class="scene-generate-box">
+            <label class="scene-generate-field">
+              <span>地图描述</span>
+              <textarea id="scenePromptInput" class="scene-generate-input" maxlength="1000" placeholder="例如：废弃医院一楼，有门厅、长走廊、病房、护士站，尽头有通往地下室的楼梯。">${escapeHtml(scene?.generated_prompt || '')}</textarea>
+            </label>
+            <div class="scene-generate-actions">
+              <button id="sceneGenerateBtn" type="button" class="btn-small">根据描述生成地图</button>
+              <span id="sceneGenerateStatus" class="scene-generate-status"></span>
+            </div>
+          </div>
+        `
+        : '';
 
       const imgUrl = sceneImageUrl(scene);
       const tokens = scene?.tokens || [];
@@ -2241,6 +2315,7 @@
 
       sceneContent.innerHTML = `
         ${toolbar}
+        ${generator}
         <div class="scene-canvas-wrap">
           <div class="scene-stage" id="sceneStage">
             ${
@@ -2267,12 +2342,21 @@
       const addNpcBtn = document.getElementById('sceneAddNpcBtn');
       const syncPcBtn = document.getElementById('sceneSyncPcBtn');
       const clearBtn = document.getElementById('sceneClearBtn');
+      const generateBtn = document.getElementById('sceneGenerateBtn');
+      const promptInput = document.getElementById('scenePromptInput');
       const stage = document.getElementById('sceneStage');
 
       uploadBtn?.addEventListener('click', () => sceneFileInput.click());
       addNpcBtn?.addEventListener('click', addSceneNpcToken);
       syncPcBtn?.addEventListener('click', syncScenePcTokens);
       clearBtn?.addEventListener('click', clearScene);
+      generateBtn?.addEventListener('click', generateSceneMap);
+      promptInput?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          generateSceneMap();
+        }
+      });
 
       stage?.querySelectorAll('.scene-token--draggable').forEach((tokenEl) => {
         tokenEl.addEventListener('pointerdown', (event) => startSceneDrag(event, tokenEl));
@@ -2285,6 +2369,51 @@
           if (tokenEl?.dataset.id) deleteSceneToken(tokenEl.dataset.id);
         });
       });
+    }
+
+    async function generateSceneMap() {
+      const promptInput = document.getElementById('scenePromptInput');
+      const generateBtn = document.getElementById('sceneGenerateBtn');
+      const statusEl = document.getElementById('sceneGenerateStatus');
+      const prompt = promptInput?.value.trim() || '';
+      if (!prompt) {
+        if (statusEl) statusEl.textContent = '请输入地图描述';
+        promptInput?.focus();
+        return;
+      }
+      if (prompt.length > 1000) {
+        if (statusEl) statusEl.textContent = '地图描述不能超过 1000 字';
+        return;
+      }
+
+      if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.textContent = '生成中…';
+      }
+      if (statusEl) statusEl.textContent = '正在绘制地图';
+
+      let data = null;
+      try {
+        const response = await api('/api/scene/generate', {
+          method: 'POST',
+          body: JSON.stringify({ prompt }),
+        });
+        data = response.data;
+      } catch (error) {
+        if (statusEl) statusEl.textContent = '生成失败，请稍后重试';
+      } finally {
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generateBtn.textContent = '根据描述生成地图';
+        }
+      }
+      if (!data?.ok) {
+        if (statusEl && data) statusEl.textContent = data.error || '生成失败';
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
     }
 
     function startSceneDrag(event, tokenEl) {
@@ -3730,9 +3859,13 @@
       authError.textContent = '';
 
       const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+      const payload = { username };
+      if (authMode === 'register') {
+        payload.role = document.querySelector('input[name="registerRole"]:checked')?.value || 'player';
+      }
       const { res, data } = await api(endpoint, {
         method: 'POST',
-        body: JSON.stringify({ username }),
+        body: JSON.stringify(payload),
       });
 
       authSubmitBtn.disabled = false;

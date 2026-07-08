@@ -19,12 +19,12 @@ python server.py                  # http://127.0.0.1:8080
 | 公网 | `http://47.81.210.196:8080` |
 | 路径 | `/opt/htmldice/` |
 | 进程 | `python3 server.py`（无 systemd，nohup 后台） |
-| SSH 密钥 | 本地 `d:\codex\irene.pem`，用户 `root` |
+| SSH 密钥 | 本地 `D:\11\irene.pem`，用户 `root` |
 
 ### 部署（只同步代码，不覆盖线上数据）
 
 ```powershell
-scp -i "d:\codex\irene.pem" server.py index.html cthulhu.css monsters.json character_import.py requirements.txt CODEX.md root@47.81.210.196:/opt/htmldice/
+scp -i "D:\11\irene.pem" server.py index.html cthulhu.css monsters.json character_import.py requirements.txt CODEX.md root@47.81.210.196:/opt/htmldice/
 ```
 
 **不要覆盖**：`users.json`、`characters.json`、`rooms.json`、`assets/scenes/*`、`assets/handouts/*`
@@ -32,7 +32,7 @@ scp -i "d:\codex\irene.pem" server.py index.html cthulhu.css monsters.json chara
 重启服务（PowerShell 用 `;` 不要用 `&&`）：
 
 ```powershell
-ssh -i "d:\codex\irene.pem" root@47.81.210.196 "pkill -f 'python3 server.py' || true; sleep 1; cd /opt/htmldice; mkdir -p assets/scenes assets/handouts; nohup python3 server.py >> server.log 2>&1 </dev/null & disown; sleep 2; curl -s http://127.0.0.1:8080/api/me"
+ssh -i "D:\11\irene.pem" root@47.81.210.196 "pkill -f 'python3 server.py' || true; sleep 1; cd /opt/htmldice; mkdir -p assets/scenes assets/handouts; nohup python3 server.py >> server.log 2>&1 </dev/null & disown; sleep 2; curl -s http://127.0.0.1:8080/api/me"
 ```
 
 ## 架构（极简）

@@ -3,7 +3,10 @@
 
 import base64
 import binascii
+import hashlib
+import html
 import json
+import math
 import os
 import random
 import re
@@ -29,6 +32,9 @@ SESSION_COOKIE = "session"
 ROLE_PLAYER = "player"
 ROLE_KP = "kp"
 ROLE_ADMIN = "admin"
+BUILTIN_TEST_KP_USERNAME = "上帝KP"
+BUILTIN_TEST_ROOM_ID = "ark"
+BUILTIN_TEST_ROOM_NAME = "方舟"
 USERNAME_PATTERN = re.compile(
     r"^[\w\u4e00-\u9fff\u3400-\u4dbf\u20000-\u2a6df\u2a700-\u2b73f\u2b740-\u2b81f\u2b820-\u2ceaf\u2ceb0-\u2ebef\u30000-\u3134f-]{2,20}$"
 )
@@ -69,6 +75,23 @@ def load_users():
 def save_users(users):
     with open(USERS_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
+
+
+def ensure_builtin_test_user():
+    users = load_users()
+    user = users.get(BUILTIN_TEST_KP_USERNAME)
+    changed = False
+    if not user:
+        users[BUILTIN_TEST_KP_USERNAME] = {
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "role": ROLE_KP,
+        }
+        changed = True
+    elif user.get("role") != ROLE_KP:
+        user["role"] = ROLE_KP
+        changed = True
+    if changed:
+        save_users(users)
 
 
 def migrate_characters_data(raw):
@@ -168,11 +191,90 @@ def save_rooms():
         json.dump(rooms, f, ensure_ascii=False, indent=2)
 
 
+def new_room_record(name, kp, permanent=False):
+    room = {
+        "name": name,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "kp": kp,
+        "players": [],
+        "rolls": [],
+        "last_roll_id": 0,
+        "next_roll_id": 1,
+        "timeline": {
+            "entries": [],
+            "next_entry_id": 1,
+            "current_entry_id": None,
+            "updated_at": None,
+        },
+        "backpacks": {},
+        "next_item_id": 1,
+        "last_item_id": 0,
+    }
+    if permanent:
+        room["permanent"] = True
+    return room
+
+
+def find_builtin_test_room_id():
+    if BUILTIN_TEST_ROOM_ID in rooms:
+        return BUILTIN_TEST_ROOM_ID
+    for room_id, room in rooms.items():
+        if room.get("kp") == BUILTIN_TEST_KP_USERNAME and room.get("name") == BUILTIN_TEST_ROOM_NAME:
+            return room_id
+    return BUILTIN_TEST_ROOM_ID
+
+
+def ensure_builtin_test_room():
+    room_id = find_builtin_test_room_id()
+    changed = False
+    if room_id not in rooms:
+        rooms[room_id] = new_room_record(BUILTIN_TEST_ROOM_NAME, BUILTIN_TEST_KP_USERNAME, permanent=True)
+        return True
+
+    room = rooms[room_id]
+    if room.get("name") != BUILTIN_TEST_ROOM_NAME:
+        room["name"] = BUILTIN_TEST_ROOM_NAME
+        changed = True
+    if room.get("kp") != BUILTIN_TEST_KP_USERNAME:
+        room["kp"] = BUILTIN_TEST_KP_USERNAME
+        changed = True
+    if not room.get("permanent"):
+        room["permanent"] = True
+        changed = True
+    if not room.get("created_at"):
+        room["created_at"] = datetime.now(timezone.utc).isoformat()
+        changed = True
+    if not isinstance(room.get("players"), list):
+        room["players"] = []
+        changed = True
+    if BUILTIN_TEST_KP_USERNAME in room.get("players", []):
+        room["players"] = [player for player in room["players"] if player != BUILTIN_TEST_KP_USERNAME]
+        changed = True
+    if not isinstance(room.get("rolls"), list):
+        room["rolls"] = []
+        changed = True
+    if "last_roll_id" not in room:
+        room["last_roll_id"] = 0
+        changed = True
+    if "next_roll_id" not in room:
+        room["next_roll_id"] = 1
+        changed = True
+    if not isinstance(room.get("timeline"), dict):
+        room["timeline"] = {
+            "entries": [],
+            "next_entry_id": 1,
+            "current_entry_id": None,
+            "updated_at": None,
+        }
+        changed = True
+    return changed
+
+
 def rebuild_user_rooms():
     user_rooms.clear()
     for room_id, room in rooms.items():
         kp = room.get("kp")
-        if kp:
+        if kp and (kp not in user_rooms or room.get("permanent")):
             user_rooms[kp] = room_id
         for player in room.get("players", []):
             user_rooms[player] = room_id
@@ -181,6 +283,8 @@ def rebuild_user_rooms():
 def init_rooms():
     global rooms
     rooms = load_rooms()
+    if ensure_builtin_test_room():
+        save_rooms()
     rebuild_user_rooms()
 
 
@@ -263,6 +367,7 @@ def room_summary(room_id, room):
         "players": list(room.get("players", [])),
         "player_count": len(room.get("players", [])),
         "created_at": room.get("created_at"),
+        "permanent": bool(room.get("permanent")),
     }
 
 
@@ -612,13 +717,21 @@ def require_room_kp(user, room_id):
 
 SCENES_DIR = os.path.join(DIRECTORY, "assets", "scenes")
 HANDOUTS_DIR = os.path.join(DIRECTORY, "assets", "handouts")
+ITEMS_DIR = os.path.join(DIRECTORY, "assets", "items")
 SCENE_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 SCENE_MAX_BYTES = 5 * 1024 * 1024
+SCENE_PROMPT_MAX = 1000
+GENERATED_SCENE_WIDTH = 1280
+GENERATED_SCENE_HEIGHT = 800
 HANDOUT_TITLE_MAX = 80
 HANDOUT_BODY_MAX = 8000
 TIMELINE_TITLE_MAX = 80
 TIMELINE_BODY_MAX = 4000
 TIMELINE_MAX_ENTRIES = 200
+ITEM_DESCRIPTION_MAX = 600
+ITEM_NAME_MAX = 40
+ITEM_MAX_PER_ROOM = 300
+GENERATED_ITEM_SIZE = 512
 SCENE_MIME_EXTS = {
     "image/png": ".png",
     "image/jpeg": ".jpg",
@@ -646,6 +759,8 @@ def scene_to_client(scene):
         "image": f"/assets/{image}" if image else None,
         "tokens": list(scene.get("tokens", [])),
         "updated_at": scene.get("updated_at"),
+        "generated": bool(scene.get("generated")),
+        "generated_prompt": scene.get("generated_prompt", ""),
     }
 
 
@@ -712,6 +827,249 @@ def save_scene_image(room_id, filename, raw):
         handle.write(raw)
     rel_path = f"scenes/{room_id}/{file_name}"
     return rel_path, None
+
+
+MAP_AREA_KEYWORDS = [
+    (("入口", "大门", "门厅", "玄关"), "入口"),
+    (("大厅", "大堂", "主厅", "宴会厅"), "大厅"),
+    (("走廊", "长廊", "通道", "甬道"), "走廊"),
+    (("书房", "图书馆", "档案室"), "书房"),
+    (("卧室", "寝室", "客房"), "卧室"),
+    (("厨房", "后厨"), "厨房"),
+    (("餐厅", "饭厅"), "餐厅"),
+    (("仓库", "储藏室", "库房"), "仓库"),
+    (("地下室", "地窖", "地下"), "地下室"),
+    (("密室", "暗室", "隐藏房间"), "密室"),
+    (("祭坛", "仪式", "神龛"), "祭坛"),
+    (("医院", "病房", "诊室", "护士站", "药房"), "病房"),
+    (("警局", "审讯室", "牢房", "拘留室"), "警局"),
+    (("教堂", "礼拜堂", "钟楼"), "教堂"),
+    (("酒吧", "吧台", "舞台"), "酒吧"),
+    (("码头", "港口", "船坞"), "码头"),
+    (("庭院", "花园", "院子"), "庭院"),
+    (("墓地", "坟场", "陵园"), "墓地"),
+    (("洞穴", "矿洞", "洞窟"), "洞穴"),
+    (("研究室", "实验室", "手术室"), "实验室"),
+    (("办公室", "会客室"), "办公室"),
+]
+
+
+def normalize_scene_prompt(prompt):
+    prompt = re.sub(r"\s+", " ", str(prompt or "")).strip()
+    return prompt[:SCENE_PROMPT_MAX]
+
+
+def add_unique_label(labels, label):
+    label = label.strip()
+    if label and label not in labels:
+        labels.append(label)
+
+
+def compact_map_label(text, max_len=10):
+    text = re.sub(r"[\s　]+", "", text)
+    text = re.sub(r"^(这里|这个|这座|这间|一个|一座|一间|有|包括|包含|以及|还有|和|并且)", "", text)
+    text = re.sub(r"(区域|房间|地点|地图|场景|附近|尽头)$", "", text)
+    text = re.sub(r"[^\w\u4e00-\u9fff-]", "", text)
+    if len(text) > max_len:
+        text = text[:max_len]
+    return text
+
+
+def extract_scene_map_labels(prompt):
+    hits = []
+    for keywords, label in MAP_AREA_KEYWORDS:
+        positions = [prompt.find(word) for word in keywords if word in prompt]
+        if positions:
+            hits.append((min(positions), label))
+    labels = []
+    for _, label in sorted(hits, key=lambda item: item[0]):
+        add_unique_label(labels, label)
+
+    for chunk in re.split(r"[，,。；;、\n\r]+", prompt):
+        label = compact_map_label(chunk)
+        if 2 <= len(label) <= 10 and not any(word in label for word in ("生成", "描述", "地图", "需要", "可以")):
+            add_unique_label(labels, label)
+
+    for label in ("入口", "大厅", "走廊", "密室", "出口"):
+        if len(labels) >= 5:
+            break
+        add_unique_label(labels, label)
+    return labels[:9]
+
+
+def scene_prompt_has(prompt, *keywords):
+    return any(word in prompt for word in keywords)
+
+
+def wrap_svg_text(text, line_len=38, max_lines=3):
+    text = normalize_scene_prompt(text)
+    lines = []
+    while text and len(lines) < max_lines:
+        lines.append(text[:line_len])
+        text = text[line_len:]
+    if text and lines:
+        lines[-1] = f"{lines[-1][:-1]}…"
+    return lines
+
+
+def build_generated_scene_svg(prompt):
+    prompt = normalize_scene_prompt(prompt)
+    seed = int(hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:16], 16)
+    rng = random.Random(seed)
+    labels = extract_scene_map_labels(prompt)
+    width = GENERATED_SCENE_WIDTH
+    height = GENERATED_SCENE_HEIGHT
+    margin_x = 72
+    top_y = 118
+    bottom_y = 108
+    cols = 3 if len(labels) <= 6 else 4
+    rows = (len(labels) + cols - 1) // cols
+    cell_w = (width - margin_x * 2) / cols
+    cell_h = (height - top_y - bottom_y) / rows
+    rooms_layout = []
+
+    for index, label in enumerate(labels):
+        col = index % cols
+        row = index // cols
+        room_w = cell_w * rng.uniform(0.62, 0.82)
+        room_h = cell_h * rng.uniform(0.52, 0.72)
+        x = margin_x + col * cell_w + (cell_w - room_w) / 2 + rng.uniform(-cell_w * 0.05, cell_w * 0.05)
+        y = top_y + row * cell_h + (cell_h - room_h) / 2 + rng.uniform(-cell_h * 0.06, cell_h * 0.06)
+        x = max(36, min(width - room_w - 36, x))
+        y = max(top_y - 28, min(height - bottom_y - room_h + 24, y))
+        rooms_layout.append(
+            {
+                "label": label,
+                "x": x,
+                "y": y,
+                "w": room_w,
+                "h": room_h,
+                "cx": x + room_w / 2,
+                "cy": y + room_h / 2,
+            }
+        )
+
+    def esc(value):
+        return html.escape(str(value), quote=True)
+
+    def fmt(value):
+        return f"{value:.1f}"
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        "<defs>",
+        '<radialGradient id="paperGlow" cx="50%" cy="45%" r="75%">',
+        '<stop offset="0%" stop-color="#3b3023"/>',
+        '<stop offset="65%" stop-color="#191712"/>',
+        '<stop offset="100%" stop-color="#080806"/>',
+        "</radialGradient>",
+        '<filter id="roughen"><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="8"/><feColorMatrix type="saturate" values="0.18"/><feBlend mode="multiply" in2="SourceGraphic"/></filter>',
+        "</defs>",
+        '<rect width="1280" height="800" fill="url(#paperGlow)"/>',
+        '<rect x="24" y="24" width="1232" height="752" rx="18" fill="none" stroke="#8a6f3c" stroke-width="3" opacity="0.75"/>',
+        '<g opacity="0.13" stroke="#d7bd76" stroke-width="1">',
+    ]
+
+    for x in range(80, width, 80):
+        parts.append(f'<line x1="{x}" y1="72" x2="{x}" y2="{height - 72}"/>')
+    for y in range(120, height - 80, 80):
+        parts.append(f'<line x1="48" y1="{y}" x2="{width - 48}" y2="{y}"/>')
+    parts.append("</g>")
+
+    title = compact_map_label(prompt, 16) or "生成地图"
+    parts.extend(
+        [
+            f'<text x="64" y="66" fill="#f2d98c" font-size="32" font-family="Noto Serif SC, SimSun, serif" font-weight="700">{esc(title)}</text>',
+            '<text x="64" y="94" fill="#9fb9a8" font-size="18" font-family="Noto Serif SC, SimSun, serif">KP 描述生成 · 可继续拖拽 PC / NPC 棋子</text>',
+        ]
+    )
+
+    for first, second in zip(rooms_layout, rooms_layout[1:]):
+        mid_x = (first["cx"] + second["cx"]) / 2
+        path = (
+            f'M {fmt(first["cx"])} {fmt(first["cy"])} '
+            f'L {fmt(mid_x)} {fmt(first["cy"])} '
+            f'L {fmt(mid_x)} {fmt(second["cy"])} '
+            f'L {fmt(second["cx"])} {fmt(second["cy"])}'
+        )
+        parts.append(f'<path d="{path}" fill="none" stroke="#8d7845" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" opacity="0.58"/>')
+        parts.append(f'<path d="{path}" fill="none" stroke="#18140f" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>')
+
+    if len(rooms_layout) > 4:
+        first = rooms_layout[0]
+        last = rooms_layout[-1]
+        path = f'M {fmt(first["cx"])} {fmt(first["cy"])} Q {fmt(width / 2)} {fmt(height - 92)} {fmt(last["cx"])} {fmt(last["cy"])}'
+        parts.append(f'<path d="{path}" fill="none" stroke="#b8964d" stroke-width="8" stroke-dasharray="16 16" opacity="0.55"/>')
+
+    for room in rooms_layout:
+        parts.append(
+            f'<rect x="{fmt(room["x"])}" y="{fmt(room["y"])}" width="{fmt(room["w"])}" height="{fmt(room["h"])}" rx="12" fill="#2b261d" stroke="#b89855" stroke-width="5" filter="url(#roughen)"/>'
+        )
+        parts.append(
+            f'<rect x="{fmt(room["x"] + 12)}" y="{fmt(room["y"] + 12)}" width="{fmt(room["w"] - 24)}" height="{fmt(room["h"] - 24)}" rx="7" fill="none" stroke="#e0c577" stroke-width="2" opacity="0.28"/>'
+        )
+        parts.append(
+            f'<text x="{fmt(room["cx"])}" y="{fmt(room["cy"] + 6)}" fill="#f6e8b7" font-size="27" font-family="Noto Serif SC, SimSun, serif" font-weight="700" text-anchor="middle">{esc(room["label"])}</text>'
+        )
+
+    feature_room = rooms_layout[min(1, len(rooms_layout) - 1)]
+    if scene_prompt_has(prompt, "水", "河", "湖", "海", "池", "井", "下水道", "深潜"):
+        parts.append(
+            f'<ellipse cx="{fmt(feature_room["cx"])}" cy="{fmt(feature_room["cy"] + feature_room["h"] * 0.22)}" rx="{fmt(feature_room["w"] * 0.23)}" ry="{fmt(feature_room["h"] * 0.13)}" fill="#244d61" stroke="#7ac2d1" stroke-width="3" opacity="0.9"/>'
+        )
+        parts.append(f'<text x="{fmt(feature_room["cx"])}" y="{fmt(feature_room["cy"] + feature_room["h"] * 0.25)}" fill="#c9eef2" font-size="15" font-family="Noto Serif SC, SimSun, serif" text-anchor="middle">水域</text>')
+
+    if scene_prompt_has(prompt, "森林", "树林", "树", "花园", "庭院", "墓地"):
+        for index in range(8):
+            cx = 90 + index * 38 + rng.uniform(-8, 8)
+            cy = height - 176 + rng.uniform(-18, 18)
+            parts.append(f'<circle cx="{fmt(cx)}" cy="{fmt(cy)}" r="{rng.randint(12, 20)}" fill="#23482f" stroke="#5e8a58" stroke-width="2" opacity="0.9"/>')
+        parts.append('<text x="95" y="674" fill="#a7d09e" font-size="18" font-family="Noto Serif SC, SimSun, serif">树影 / 遮蔽</text>')
+
+    if scene_prompt_has(prompt, "祭坛", "仪式", "邪神", "神龛", "法阵"):
+        room = rooms_layout[-1]
+        points = []
+        for index in range(6):
+            angle = -1.5708 + index * 1.0472
+            radius = min(room["w"], room["h"]) * 0.18
+            points.append(f'{fmt(room["cx"] + radius * math.cos(angle))},{fmt(room["cy"] + radius * math.sin(angle))}')
+        parts.append(f'<polygon points="{" ".join(points)}" fill="#3a0d12" stroke="#d6a84d" stroke-width="4" opacity="0.92"/>')
+        parts.append(f'<circle cx="{fmt(room["cx"])}" cy="{fmt(room["cy"])}" r="{fmt(min(room["w"], room["h"]) * 0.09)}" fill="none" stroke="#e0c577" stroke-width="3"/>')
+
+    if scene_prompt_has(prompt, "楼梯", "地下", "二楼", "上楼", "下楼", "地窖"):
+        room = rooms_layout[0]
+        sx = room["x"] + room["w"] * 0.12
+        sy = room["y"] + room["h"] * 0.18
+        for index in range(7):
+            parts.append(f'<line x1="{fmt(sx)}" y1="{fmt(sy + index * 10)}" x2="{fmt(sx + 76)}" y2="{fmt(sy + index * 10)}" stroke="#d2bb6c" stroke-width="4" opacity="0.72"/>')
+        parts.append(f'<text x="{fmt(sx + 38)}" y="{fmt(sy + 88)}" fill="#ead68f" font-size="15" font-family="Noto Serif SC, SimSun, serif" text-anchor="middle">楼梯</text>')
+
+    if scene_prompt_has(prompt, "陷阱", "危险", "坍塌", "血迹", "封锁"):
+        room = rooms_layout[len(rooms_layout) // 2]
+        for offset in range(-30, 40, 15):
+            parts.append(f'<line x1="{fmt(room["cx"] + offset)}" y1="{fmt(room["cy"] - 34)}" x2="{fmt(room["cx"] + offset + 46)}" y2="{fmt(room["cy"] + 34)}" stroke="#8f2e2e" stroke-width="5" opacity="0.65"/>')
+        parts.append(f'<text x="{fmt(room["cx"])}" y="{fmt(room["cy"] + 58)}" fill="#f2a09a" font-size="16" font-family="Noto Serif SC, SimSun, serif" text-anchor="middle">危险区域</text>')
+
+    parts.append('<g font-family="Noto Serif SC, SimSun, serif" font-size="15" fill="#cdbf99" opacity="0.82">')
+    for index, line in enumerate(wrap_svg_text(prompt)):
+        parts.append(f'<text x="64" y="{height - 58 + index * 20}">{esc(line)}</text>')
+    parts.append("</g>")
+    parts.append("</svg>")
+    return "\n".join(parts)
+
+
+def save_generated_scene_map(room_id, prompt):
+    room_dir = os.path.join(SCENES_DIR, room_id)
+    os.makedirs(room_dir, exist_ok=True)
+    for old_name in os.listdir(room_dir):
+        old_path = os.path.join(room_dir, old_name)
+        if os.path.isfile(old_path):
+            os.remove(old_path)
+    file_name = "generated_scene.svg"
+    file_path = os.path.join(room_dir, file_name)
+    with open(file_path, "w", encoding="utf-8") as handle:
+        handle.write(build_generated_scene_svg(prompt))
+    return f"scenes/{room_id}/{file_name}"
 
 
 def ensure_room_handouts(room):
@@ -881,6 +1239,360 @@ def normalize_handout_targets(raw_targets, room):
     if not normalized:
         return None, "请指定发放对象"
     return normalized, None
+
+
+def normalize_item_description(description):
+    description = re.sub(r"\s+", " ", str(description or "")).strip()
+    return description[:ITEM_DESCRIPTION_MAX]
+
+
+def item_prompt_has(description, *keywords):
+    return any(word in description for word in keywords)
+
+
+def detect_item_kind(description):
+    kind_keywords = [
+        ("key", ("钥匙", "钥", "锁匙")),
+        ("letter", ("信", "信件", "纸条", "纸", "笔记", "日记", "文件")),
+        ("book", ("书", "书本", "典籍", "册子", "笔记本")),
+        ("bottle", ("瓶", "药瓶", "药水", "试管", "酒瓶", "香水")),
+        ("blade", ("刀", "匕首", "短剑", "剑", "刃")),
+        ("coin", ("硬币", "金币", "银币", "徽章", "奖章")),
+        ("gem", ("宝石", "水晶", "晶体", "戒指")),
+        ("amulet", ("护符", "吊坠", "项链", "符咒")),
+        ("map", ("地图", "海图", "藏宝图")),
+        ("gun", ("枪", "手枪", "左轮")),
+    ]
+    for kind, keywords in kind_keywords:
+        if item_prompt_has(description, *keywords):
+            return kind
+    return "artifact"
+
+
+def extract_item_name(description):
+    description = normalize_item_description(description)
+    kind = detect_item_kind(description)
+    adjective = ""
+    if item_prompt_has(description, "锈", "铁锈", "腐蚀", "斑斑"):
+        adjective = "锈迹"
+    elif item_prompt_has(description, "破旧", "古旧", "古老", "陈旧", "泛黄"):
+        adjective = "旧"
+    elif item_prompt_has(description, "血", "血迹", "血色"):
+        adjective = "血迹"
+    elif item_prompt_has(description, "发光", "微光", "幽光", "荧光"):
+        adjective = "微光"
+    base_names = {
+        "key": "钥匙",
+        "letter": "信件",
+        "book": "书本",
+        "bottle": "药瓶",
+        "blade": "匕首",
+        "coin": "硬币",
+        "gem": "宝石",
+        "amulet": "护符",
+        "map": "地图",
+        "gun": "手枪",
+        "artifact": "物品",
+    }
+    if adjective:
+        return f"{adjective}{base_names.get(kind, '物品')}"[:ITEM_NAME_MAX]
+    compact = re.sub(r"[^\w\u4e00-\u9fff-]", "", description)
+    compact = re.sub(r"^(一把|一个|一枚|一张|一本|一瓶|一件|这把|这个|这枚|这张|这本|这瓶)", "", compact)
+    if 2 <= len(compact) <= ITEM_NAME_MAX:
+        return compact
+    return base_names.get(kind, "物品")
+
+
+def wrap_item_svg_text(description, line_len=18, max_lines=3):
+    text = normalize_item_description(description)
+    lines = []
+    while text and len(lines) < max_lines:
+        lines.append(text[:line_len])
+        text = text[line_len:]
+    if text and lines and len(lines[-1]) > 1:
+        lines[-1] = f"{lines[-1][:-1]}…"
+    return lines
+
+
+def ensure_room_backpacks(room):
+    backpacks = room.get("backpacks")
+    if not isinstance(backpacks, dict):
+        backpacks = {}
+        room["backpacks"] = backpacks
+
+    max_id = 0
+    normalized = {}
+    for owner, items in list(backpacks.items()):
+        owner_name = normalize_username(str(owner))
+        if not owner_name:
+            continue
+        if not isinstance(items, list):
+            items = []
+        clean_items = []
+        for index, item in enumerate(items):
+            if not isinstance(item, dict):
+                continue
+            try:
+                item_id = int(item.get("id", index + 1))
+            except (TypeError, ValueError):
+                item_id = index + 1
+            item["id"] = item_id
+            item.setdefault("owner", owner_name)
+            item.setdefault("name", extract_item_name(item.get("description", "")))
+            item.setdefault("description", "")
+            item.setdefault("image", None)
+            item.setdefault("created_at", None)
+            item.setdefault("created_by", "")
+            clean_items.append(item)
+            max_id = max(max_id, item_id)
+        normalized[owner_name] = clean_items
+
+    for player in room.get("players", []):
+        normalized.setdefault(player, [])
+
+    room["backpacks"] = normalized
+    try:
+        next_item_id = int(room.get("next_item_id", 1))
+    except (TypeError, ValueError):
+        next_item_id = 1
+    room["next_item_id"] = max(next_item_id, max_id + 1)
+    room.setdefault("last_item_id", max_id)
+    return room
+
+
+def backpack_item_to_client(item):
+    image = item.get("image")
+    return {
+        "id": item.get("id"),
+        "name": item.get("name") or extract_item_name(item.get("description", "")),
+        "description": item.get("description", ""),
+        "image": f"/assets/{image}" if image else None,
+        "owner": item.get("owner", ""),
+        "created_at": item.get("created_at"),
+        "created_by": item.get("created_by"),
+    }
+
+
+def backpack_payload(room, username, can_manage):
+    ensure_room_backpacks(room)
+    owners = list(room.get("players", []))
+    for owner, items in room.get("backpacks", {}).items():
+        if owner not in owners and items:
+            owners.append(owner)
+    if not can_manage:
+        owners = [username]
+    return {
+        "can_manage": bool(can_manage),
+        "players": list(room.get("players", [])),
+        "backpacks": [
+            {
+                "owner": owner,
+                "items": [backpack_item_to_client(item) for item in room.get("backpacks", {}).get(owner, [])],
+            }
+            for owner in owners
+        ],
+        "last_item_id": room.get("last_item_id", 0),
+    }
+
+
+def delete_item_image_file(item):
+    image = item.get("image") if isinstance(item, dict) else None
+    if not image or not str(image).startswith("items/"):
+        return
+    base_dir = os.path.abspath(ITEMS_DIR)
+    file_path = os.path.abspath(os.path.join(DIRECTORY, "assets", image))
+    if not (file_path == base_dir or file_path.startswith(base_dir + os.sep)):
+        return
+    if os.path.isfile(file_path):
+        os.remove(file_path)
+
+
+def delete_room_item_files(room_id):
+    room_dir = os.path.join(ITEMS_DIR, room_id)
+    if os.path.isdir(room_dir):
+        for old_name in os.listdir(room_dir):
+            old_path = os.path.join(room_dir, old_name)
+            if os.path.isfile(old_path):
+                os.remove(old_path)
+        try:
+            os.rmdir(room_dir)
+        except OSError:
+            pass
+
+
+def build_generated_item_svg(description):
+    description = normalize_item_description(description)
+    name = extract_item_name(description)
+    kind = detect_item_kind(description)
+    seed = int(hashlib.sha256(f"item:{description}".encode("utf-8")).hexdigest()[:16], 16)
+    rng = random.Random(seed)
+    size = GENERATED_ITEM_SIZE
+    rusty = item_prompt_has(description, "锈", "铁锈", "腐蚀", "斑斑")
+    bloody = item_prompt_has(description, "血", "血迹", "血色")
+    glowing = item_prompt_has(description, "发光", "微光", "幽光", "荧光", "魔法")
+    old = item_prompt_has(description, "破旧", "古旧", "古老", "陈旧", "泛黄", "磨损")
+
+    def esc(value):
+        return html.escape(str(value), quote=True)
+
+    def fmt(value):
+        return f"{value:.1f}"
+
+    metal = "#aa9b78" if old or rusty else "#d6c28c"
+    accent = "#c9a227"
+    glow = "#65d8a9" if glowing else "#d7b663"
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">',
+        "<defs>",
+        '<radialGradient id="bg" cx="48%" cy="38%" r="72%">',
+        '<stop offset="0%" stop-color="#20372d"/>',
+        '<stop offset="58%" stop-color="#0d1c16"/>',
+        '<stop offset="100%" stop-color="#050807"/>',
+        "</radialGradient>",
+        '<filter id="softShadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="13" flood-color="#000" flood-opacity="0.55"/></filter>',
+        '<filter id="paperNoise"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="5"/><feColorMatrix type="saturate" values="0.25"/><feBlend mode="multiply" in2="SourceGraphic"/></filter>',
+        "</defs>",
+        '<rect width="512" height="512" fill="url(#bg)"/>',
+        '<rect x="24" y="24" width="464" height="464" rx="18" fill="none" stroke="#8a6f3c" stroke-width="3" opacity="0.72"/>',
+        '<rect x="42" y="42" width="428" height="428" rx="12" fill="none" stroke="#c9a227" stroke-width="1.3" opacity="0.22"/>',
+    ]
+
+    if glowing:
+        parts.append(f'<circle cx="256" cy="237" r="145" fill="{glow}" opacity="0.09"/>')
+        parts.append(f'<circle cx="256" cy="237" r="82" fill="{glow}" opacity="0.12"/>')
+
+    angle = rng.uniform(-8, 8)
+    parts.append(f'<g filter="url(#softShadow)" transform="rotate({fmt(angle)} 256 245)">')
+
+    if kind == "key":
+        parts.extend(
+            [
+                f'<circle cx="172" cy="230" r="55" fill="none" stroke="{metal}" stroke-width="22"/>',
+                '<circle cx="172" cy="230" r="22" fill="none" stroke="#0b1712" stroke-width="16"/>',
+                f'<rect x="213" y="218" width="170" height="25" rx="11" fill="{metal}"/>',
+                f'<rect x="350" y="238" width="25" height="54" rx="4" fill="{metal}"/>',
+                f'<rect x="384" y="238" width="21" height="39" rx="4" fill="{metal}"/>',
+                '<line x1="236" y1="230" x2="330" y2="230" stroke="#f0dcaa" stroke-width="5" opacity="0.42"/>',
+            ]
+        )
+    elif kind == "letter":
+        parts.extend(
+            [
+                '<rect x="132" y="155" width="248" height="170" rx="8" fill="#c7b483" stroke="#80683a" stroke-width="5" filter="url(#paperNoise)"/>',
+                '<path d="M140 166 L256 256 L372 166" fill="none" stroke="#7d673c" stroke-width="5" opacity="0.72"/>',
+                '<path d="M140 315 L224 238 M372 315 L288 238" fill="none" stroke="#7d673c" stroke-width="4" opacity="0.42"/>',
+                '<circle cx="256" cy="248" r="21" fill="#7b1d24" stroke="#d7a651" stroke-width="3"/>',
+            ]
+        )
+    elif kind == "book":
+        parts.extend(
+            [
+                '<path d="M142 126 H330 Q370 126 370 166 V366 Q370 388 348 388 H150 Q128 388 128 366 V148 Q128 126 142 126 Z" fill="#4b151c" stroke="#b68d46" stroke-width="6"/>',
+                '<path d="M166 144 H335 Q348 144 348 160 V360 Q348 372 335 372 H166 Z" fill="#251a14" opacity="0.3"/>',
+                '<rect x="168" y="164" width="145" height="190" rx="6" fill="none" stroke="#c9a227" stroke-width="4" opacity="0.74"/>',
+                '<path d="M128 352 Q212 333 370 352" fill="none" stroke="#ead8a0" stroke-width="7" opacity="0.62"/>',
+            ]
+        )
+    elif kind == "bottle":
+        parts.extend(
+            [
+                '<rect x="228" y="118" width="56" height="74" rx="12" fill="#83b5a0" stroke="#d7c591" stroke-width="5" opacity="0.82"/>',
+                '<path d="M194 196 Q194 166 228 166 H284 Q318 166 318 196 L342 354 Q346 386 314 396 H198 Q166 386 170 354 Z" fill="#2c6f62" stroke="#d7c591" stroke-width="7" opacity="0.9"/>',
+                '<path d="M190 318 Q246 300 326 318 L314 378 H198 Z" fill="#8c1d2c" opacity="0.55"/>',
+                '<rect x="220" y="104" width="72" height="26" rx="8" fill="#6b4b2a" stroke="#c9a227" stroke-width="4"/>',
+            ]
+        )
+    elif kind == "blade":
+        parts.extend(
+            [
+                f'<path d="M166 350 L318 104 Q346 76 360 92 Q376 110 348 138 L206 376 Z" fill="{metal}" stroke="#f1dfb1" stroke-width="5"/>',
+                '<path d="M204 316 L252 362 L222 394 L174 348 Z" fill="#5b321f" stroke="#c9a227" stroke-width="5"/>',
+                '<rect x="168" y="344" width="105" height="30" rx="12" fill="#1d1611" stroke="#b6904a" stroke-width="5" transform="rotate(43 220 358)"/>',
+                '<path d="M230 276 L324 120" stroke="#fff1c9" stroke-width="5" opacity="0.45"/>',
+            ]
+        )
+    elif kind == "coin":
+        parts.extend(
+            [
+                '<circle cx="256" cy="242" r="104" fill="#a8782c" stroke="#f1d58c" stroke-width="9"/>',
+                '<circle cx="256" cy="242" r="76" fill="none" stroke="#4f3412" stroke-width="6" opacity="0.45"/>',
+                '<path d="M256 171 L274 221 L328 222 L285 254 L301 306 L256 276 L211 306 L227 254 L184 222 L238 221 Z" fill="#d7b663" stroke="#6a4618" stroke-width="4"/>',
+            ]
+        )
+    elif kind == "gem":
+        points = "256,98 350,178 318,348 256,406 194,348 162,178"
+        parts.extend(
+            [
+                f'<polygon points="{points}" fill="#4fb39b" stroke="#d8f6e8" stroke-width="6"/>',
+                '<path d="M256 98 L256 406 M162 178 H350 M194 348 L256 178 L318 348" stroke="#12352f" stroke-width="5" opacity="0.35"/>',
+                '<path d="M210 172 L246 124 L288 172 Z" fill="#b4fff0" opacity="0.35"/>',
+            ]
+        )
+    elif kind == "map":
+        parts.extend(
+            [
+                '<path d="M122 146 Q168 120 214 146 Q258 170 306 146 Q352 124 390 146 V354 Q348 330 306 354 Q258 378 214 354 Q166 328 122 354 Z" fill="#c5b27d" stroke="#7e6538" stroke-width="6" filter="url(#paperNoise)"/>',
+                '<path d="M214 146 V354 M306 146 V354" stroke="#7e6538" stroke-width="4" opacity="0.35"/>',
+                '<path d="M158 250 C212 212 244 300 302 254 C326 236 350 238 370 260" fill="none" stroke="#50351c" stroke-width="5" stroke-dasharray="10 9"/>',
+                '<path d="M180 198 L204 222 M204 198 L180 222" stroke="#83232b" stroke-width="8" stroke-linecap="round"/>',
+            ]
+        )
+    elif kind == "gun":
+        parts.extend(
+            [
+                f'<path d="M152 220 H344 Q372 220 378 242 L386 270 H326 L314 250 H244 L220 342 H174 L192 250 H152 Z" fill="{metal}" stroke="#ead7a4" stroke-width="6"/>',
+                '<rect x="312" y="192" width="76" height="32" rx="8" fill="#2d2418" stroke="#b6904a" stroke-width="5"/>',
+                '<path d="M207 250 L188 340" stroke="#3f2618" stroke-width="11"/>',
+                '<circle cx="282" cy="242" r="13" fill="#101010" stroke="#c9a227" stroke-width="4"/>',
+            ]
+        )
+    else:
+        sides = []
+        for index in range(8):
+            radius = 116 if index % 2 == 0 else 72
+            angle_rad = -math.pi / 2 + index * math.pi / 4
+            sides.append(f"{fmt(256 + math.cos(angle_rad) * radius)},{fmt(238 + math.sin(angle_rad) * radius)}")
+        parts.extend(
+            [
+                f'<polygon points="{" ".join(sides)}" fill="#3b2720" stroke="{accent}" stroke-width="7"/>',
+                '<circle cx="256" cy="238" r="58" fill="none" stroke="#73d6ad" stroke-width="7" opacity="0.78"/>',
+                f'<path d="M256 178 L273 224 L322 224 L282 252 L298 300 L256 270 L214 300 L230 252 L190 224 L239 224 Z" fill="{accent}" opacity="0.55"/>',
+            ]
+        )
+
+    if rusty:
+        for _ in range(42):
+            cx = rng.uniform(135, 385)
+            cy = rng.uniform(120, 385)
+            radius = rng.uniform(2.0, 6.5)
+            parts.append(f'<circle cx="{fmt(cx)}" cy="{fmt(cy)}" r="{fmt(radius)}" fill="#8a3d1e" opacity="{rng.uniform(0.32, 0.78):.2f}"/>')
+    if bloody:
+        for _ in range(7):
+            cx = rng.uniform(168, 344)
+            cy = rng.uniform(178, 348)
+            parts.append(f'<path d="M{fmt(cx)} {fmt(cy)} C{fmt(cx + rng.uniform(-12, 12))} {fmt(cy + 20)} {fmt(cx + rng.uniform(-8, 10))} {fmt(cy + 34)} {fmt(cx + rng.uniform(-2, 8))} {fmt(cy + 48)}" stroke="#791821" stroke-width="{fmt(rng.uniform(5, 10))}" stroke-linecap="round" opacity="0.68"/>')
+    parts.append("</g>")
+
+    parts.extend(
+        [
+            f'<text x="256" y="438" text-anchor="middle" fill="#f0e1b6" font-size="28" font-family="Noto Serif SC, SimSun, serif" font-weight="700">{esc(name)}</text>',
+            '<g fill="#b9c6bb" font-size="15" font-family="Noto Serif SC, SimSun, serif" opacity="0.82">',
+        ]
+    )
+    for index, line in enumerate(wrap_item_svg_text(description)):
+        parts.append(f'<text x="256" y="{464 + index * 18}" text-anchor="middle">{esc(line)}</text>')
+    parts.extend(["</g>", "</svg>"])
+    return "\n".join(parts)
+
+
+def save_generated_item_image(room_id, item_id, description):
+    room_dir = os.path.join(ITEMS_DIR, room_id)
+    os.makedirs(room_dir, exist_ok=True)
+    file_name = f"i{item_id}.svg"
+    file_path = os.path.join(room_dir, file_name)
+    with open(file_path, "w", encoding="utf-8") as handle:
+        handle.write(build_generated_item_svg(description))
+    return f"items/{room_id}/{file_name}"
 
 
 def token_to_client(token):
@@ -1068,6 +1780,14 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
+    def end_headers(self):
+        path = urlparse(self.path).path
+        if path == "/" or path.endswith((".html", ".css", ".js")):
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
@@ -1137,6 +1857,7 @@ class Handler(SimpleHTTPRequestHandler):
                 for room_id, room in rooms.items()
             ]
             room_list.sort(key=lambda item: item.get("created_at") or "", reverse=True)
+            room_list.sort(key=lambda item: not item.get("permanent"))
             json_response(
                 self,
                 200,
@@ -1211,6 +1932,23 @@ class Handler(SimpleHTTPRequestHandler):
                     "last_handout_id": room.get("last_handout_id", 0),
                 },
             )
+            return
+
+        if path == "/api/backpack":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            if not room_id or room_id not in rooms:
+                json_response(self, 400, {"ok": False, "error": "请先加入房间"})
+                return
+            room = rooms[room_id]
+            if not user_in_room(room, user):
+                json_response(self, 403, {"ok": False, "error": "不在此房间"})
+                return
+            is_kp = room.get("kp") == user
+            json_response(self, 200, {"ok": True, **backpack_payload(room, user, is_kp)})
             return
 
         if path == "/api/timeline":
@@ -1437,21 +2175,7 @@ class Handler(SimpleHTTPRequestHandler):
                 room_id = secrets.token_urlsafe(6)
                 while room_id in rooms:
                     room_id = secrets.token_urlsafe(6)
-                rooms[room_id] = {
-                    "name": name,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "kp": user,
-                    "players": [],
-                    "rolls": [],
-                    "last_roll_id": 0,
-                    "next_roll_id": 1,
-                    "timeline": {
-                        "entries": [],
-                        "next_entry_id": 1,
-                        "current_entry_id": None,
-                        "updated_at": None,
-                    },
-                }
+                rooms[room_id] = new_room_record(name, user)
                 user_rooms[user] = room_id
                 save_rooms()
 
@@ -1574,9 +2298,13 @@ class Handler(SimpleHTTPRequestHandler):
                 if room.get("kp") != user:
                     json_response(self, 403, {"ok": False, "error": "仅房间 KP 可解散房间"})
                     return
+                if room.get("permanent"):
+                    json_response(self, 400, {"ok": False, "error": "方舟是常驻测试房，不能解散"})
+                    return
                 clear_room_member_sessions(room)
                 delete_room_scene_files(room_id)
                 delete_room_handout_files(room_id)
+                delete_room_item_files(room_id)
                 del rooms[room_id]
                 save_rooms()
 
@@ -2349,6 +3077,68 @@ class Handler(SimpleHTTPRequestHandler):
             json_response(self, 200, {"ok": True, "handout": saved})
             return
 
+        if path == "/api/backpack/items":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 404 if error == "房间不存在" else 403, {"ok": False, "error": error})
+                return
+
+            owner = normalize_username(str(body.get("owner", "")))
+            description_raw = str(body.get("description", ""))
+            if len(description_raw) > ITEM_DESCRIPTION_MAX:
+                json_response(self, 400, {"ok": False, "error": f"物品描述不能超过 {ITEM_DESCRIPTION_MAX} 字"})
+                return
+            description = normalize_item_description(description_raw)
+            if not description:
+                json_response(self, 400, {"ok": False, "error": "请输入物品描述"})
+                return
+
+            players = list(room.get("players", []))
+            if not players:
+                json_response(self, 400, {"ok": False, "error": "房间内暂无玩家，先让玩家加入房间"})
+                return
+            if owner not in players:
+                json_response(self, 400, {"ok": False, "error": "请选择房间内的玩家背包"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                ensure_room_backpacks(room)
+                total_items = sum(len(items) for items in room.get("backpacks", {}).values())
+                if total_items >= ITEM_MAX_PER_ROOM:
+                    json_response(self, 400, {"ok": False, "error": f"本房间物品最多保留 {ITEM_MAX_PER_ROOM} 件"})
+                    return
+                item_id = int(room.get("next_item_id", 1))
+                try:
+                    rel_path = save_generated_item_image(room_id, item_id, description)
+                except OSError as exc:
+                    json_response(self, 500, {"ok": False, "error": f"生成物品图片失败：{exc}"})
+                    return
+                now = datetime.now(timezone.utc).isoformat()
+                item = {
+                    "id": item_id,
+                    "name": extract_item_name(description),
+                    "description": description,
+                    "image": rel_path,
+                    "owner": owner,
+                    "created_at": now,
+                    "created_by": user,
+                }
+                room["backpacks"].setdefault(owner, []).append(item)
+                room["next_item_id"] = item_id + 1
+                room["last_item_id"] = item_id
+                save_rooms()
+                payload = backpack_payload(room, user, True)
+                saved = backpack_item_to_client(item)
+
+            json_response(self, 200, {"ok": True, "item": saved, **payload})
+            return
+
         if path == "/api/handouts/revoke":
             user = get_current_user(self)
             if not user:
@@ -2443,6 +3233,44 @@ class Handler(SimpleHTTPRequestHandler):
                 room = rooms[room_id]
                 scene = ensure_room_scene(room)
                 scene["image"] = rel_path
+                scene["updated_at"] = datetime.now(timezone.utc).isoformat()
+                save_rooms()
+
+            json_response(self, 200, {"ok": True, "scene": scene_to_client(room["scene"])})
+            return
+
+        if path == "/api/scene/generate":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            raw_prompt = str(body.get("prompt", ""))
+            if len(raw_prompt) > SCENE_PROMPT_MAX:
+                json_response(self, 400, {"ok": False, "error": f"地图描述不能超过 {SCENE_PROMPT_MAX} 字"})
+                return
+            prompt = normalize_scene_prompt(raw_prompt)
+            if not prompt:
+                json_response(self, 400, {"ok": False, "error": "请输入地图描述"})
+                return
+
+            try:
+                rel_path = save_generated_scene_map(room_id, prompt)
+            except OSError as exc:
+                json_response(self, 500, {"ok": False, "error": f"生成地图失败：{exc}"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                scene = ensure_room_scene(room)
+                scene["image"] = rel_path
+                scene["generated"] = True
+                scene["generated_prompt"] = prompt
                 scene["updated_at"] = datetime.now(timezone.utc).isoformat()
                 save_rooms()
 
@@ -2752,6 +3580,10 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/register":
+            role = str(body.get("role", ROLE_PLAYER)).strip() or ROLE_PLAYER
+            if role not in (ROLE_PLAYER, ROLE_KP):
+                json_response(self, 400, {"ok": False, "error": "请选择 PL 或 KP"})
+                return
             with data_lock:
                 users = load_users()
                 if username in users:
@@ -2759,7 +3591,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return
                 users[username] = {
                     "created_at": datetime.now(timezone.utc).isoformat(),
-                    "role": ROLE_PLAYER,
+                    "role": role,
                 }
                 save_users(users)
 
@@ -2774,9 +3606,9 @@ class Handler(SimpleHTTPRequestHandler):
                 {
                     "ok": True,
                     "username": username,
-                    "role": ROLE_PLAYER,
+                    "role": role,
                     "room": room_payload,
-                    **user_pc_payload(username, ROLE_PLAYER, session_data.get("active_pc_id")),
+                    **user_pc_payload(username, role, session_data.get("active_pc_id")),
                 },
                 set_cookie=cookie,
             )
@@ -2823,6 +3655,44 @@ class Handler(SimpleHTTPRequestHandler):
         body = read_json_body(self)
         if body is None:
             json_response(self, 400, {"ok": False, "error": "请求体无效"})
+            return
+
+        if path == "/api/backpack/items":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 404 if error == "房间不存在" else 403, {"ok": False, "error": error})
+                return
+
+            owner = normalize_username(str(body.get("owner", "")))
+            try:
+                item_id = int(body.get("id"))
+            except (TypeError, ValueError):
+                json_response(self, 400, {"ok": False, "error": "无效的物品 ID"})
+                return
+            if not owner:
+                json_response(self, 400, {"ok": False, "error": "请选择背包"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                ensure_room_backpacks(room)
+                items = room.get("backpacks", {}).get(owner, [])
+                target = next((item for item in items if item.get("id") == item_id), None)
+                if not target:
+                    json_response(self, 404, {"ok": False, "error": "物品不存在"})
+                    return
+                room["backpacks"][owner] = [item for item in items if item.get("id") != item_id]
+                delete_item_image_file(target)
+                room["last_item_id"] = max(room.get("last_item_id", 0), item_id)
+                save_rooms()
+                payload = backpack_payload(room, user, True)
+
+            json_response(self, 200, {"ok": True, **payload})
             return
 
         if path == "/api/scene/token":
@@ -2888,7 +3758,9 @@ def init_characters_db_file():
 if __name__ == "__main__":
     os.makedirs(SCENES_DIR, exist_ok=True)
     os.makedirs(HANDOUTS_DIR, exist_ok=True)
+    os.makedirs(ITEMS_DIR, exist_ok=True)
     init_characters_db_file()
+    ensure_builtin_test_user()
     init_rooms()
     with ThreadingHTTPServer(("0.0.0.0", PORT), Handler) as httpd:
         local_ip = get_local_ip()
