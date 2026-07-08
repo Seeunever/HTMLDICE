@@ -1781,7 +1781,7 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
     def end_headers(self):
-        path = urlparse(self.path).path
+        path = urlparse(getattr(self, "path", "") or "").path
         if path == "/" or path.endswith((".html", ".css", ".js")):
             self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
             self.send_header("Pragma", "no-cache")
