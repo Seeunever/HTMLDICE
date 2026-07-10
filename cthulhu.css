@@ -786,12 +786,39 @@ h1 {
 .char-portrait-hero {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1rem;
   padding: 1rem;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(201, 162, 39, 0.22);
   border-radius: 3px;
+}
+
+.char-portrait-hero__placeholder {
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  border: 1px dashed rgba(201, 162, 39, 0.3);
+  border-radius: 4px;
+}
+
+.char-portrait-gen {
+  flex: 1 1 200px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.char-portrait-gen .handout-textarea {
+  min-height: 3rem;
 }
 
 .char-portrait-hero__btn {
@@ -1183,6 +1210,53 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   color: var(--text-faint);
   font-style: italic;
   padding: 0.75rem 0.5rem;
+}
+
+.kp-quickroll-hint {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  font-style: italic;
+  margin-bottom: 0.15rem;
+}
+
+.kp-quickroll-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.kp-quickroll-btn--custom {
+  position: relative;
+  padding-right: 1.7rem;
+}
+
+.kp-quickroll-remove {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(120, 24, 24, 0.9);
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kp-quickroll-remove:hover {
+  background: var(--blood-bright);
+}
+
+.kp-quickroll-add {
+  justify-content: center;
+  color: var(--text-faint);
+  border-style: dashed;
 }
 
 .dice-actions {
@@ -2205,6 +2279,21 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   border-color: rgba(201, 162, 39, 0.22);
 }
 
+.combat-entity-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.combat-entity-portrait {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
 .combat-entity-card.dead {
   opacity: 0.55;
   border-color: rgba(122, 32, 48, 0.35);
@@ -2713,7 +2802,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   line-height: 1.2;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-  z-index: 2;
+  z-index: 4;
 }
 
 .scene-token--pc {
@@ -2759,6 +2848,47 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   font-size: 0.85rem;
   line-height: 1;
   cursor: pointer;
+}
+
+.scene-fog-toolbar {
+  margin-top: 0.4rem;
+}
+
+.scene-fog-active {
+  background: rgba(61, 143, 98, 0.35);
+  border-color: rgba(120, 210, 160, 0.65);
+}
+
+.scene-fog-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  z-index: 3;
+}
+
+.scene-fog-layer--pl {
+  pointer-events: none;
+}
+
+.scene-fog-layer--kp {
+  touch-action: none;
+}
+
+.scene-fog-cell {
+  background: #05070a;
+}
+
+.scene-fog-layer--kp .scene-fog-cell {
+  background: rgba(0, 0, 0, 0.5);
+  outline: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.scene-fog-cell--revealed {
+  background: transparent;
+}
+
+.scene-fog-layer--kp .scene-fog-cell--revealed {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .scene-token-delete:hover {
@@ -2882,10 +3012,192 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   min-height: 1rem;
 }
 
+/* —— 对抗检定 —— */
+.opposed-roll-section {
+  margin-top: 0.75rem;
+}
+
+.opposed-toggle-btn {
+  letter-spacing: 0.1em;
+}
+
+.opposed-roll-form {
+  margin-top: 0.75rem;
+  padding: 0.875rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(201, 162, 39, 0.15);
+  border-radius: 2px;
+}
+
+.opposed-sides {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.opposed-side {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.opposed-side .handout-input {
+  margin-bottom: 0;
+}
+
+.opposed-side-title {
+  font-size: 0.78rem;
+  color: var(--ancient-gold);
+  font-weight: 600;
+}
+
+.opposed-vs {
+  flex: 0 0 auto;
+  align-self: center;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  letter-spacing: 0.08em;
+}
+
+.roll-log-item.opposed {
+  background: rgba(201, 162, 39, 0.05);
+  margin: 0 -0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.roll-log-opposed-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.roll-log-opposed-tag.win {
+  color: var(--glow-bright);
+  border: 1px solid rgba(120, 200, 140, 0.4);
+}
+
+.roll-log-opposed-tag.lose {
+  color: var(--blood-bright);
+  border: 1px solid rgba(200, 80, 80, 0.4);
+}
+
+.roll-log-opposed-tag.draw {
+  color: var(--text-faint);
+  border: 1px solid rgba(180, 180, 180, 0.3);
+}
+
 .handout-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* —— NPC 生成 —— */
+.npc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.npc-card {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(201, 162, 39, 0.15);
+  border-radius: 2px;
+}
+
+.npc-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.npc-card-portrait {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+.npc-card-head-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.npc-card-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--parchment);
+}
+
+.npc-card-occ {
+  font-size: 0.75rem;
+  color: var(--ancient-gold);
+  margin-top: 0.1rem;
+}
+
+.npc-card-stats {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.npc-card-desc {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.npc-card-personality {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--glow-bright);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.npc-card-section-label {
+  margin-top: 0.6rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+}
+
+.npc-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.25rem 0.5rem;
+}
+
+.npc-check-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  padding: 0.15rem 0.4rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 2px;
+}
+
+.npc-check-row strong {
+  color: var(--parchment);
+}
+
+.npc-delete-btn {
+  flex-shrink: 0;
 }
 
 .handout-row {

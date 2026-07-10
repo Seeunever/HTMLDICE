@@ -77,6 +77,7 @@ monsters.json                静态怪物图鉴
 - `GET /api/room` — 当前房间、`last_roll_id`、`last_handout_id`
 - `GET /api/room/rolls?since=` — 增量骰点
 - `POST /api/room/roll` — 投骰（KP 可 `hidden` 暗骰）
+- `POST /api/room/opposed` — KP 发起对抗检定 `{side_a, side_b}`，每方 `type` 为 `player`（`pc_id`+`skill_name`）/`monster`（`template_id`+`skill_name`）/`custom`（`label`+`skill_value`），按成功等级+鉴定值判胜负，结果写入房间骰点记录
 
 ### 人物卡
 - `GET /api/character` `GET /api/players` `POST /api/character/status`（KP）
@@ -91,6 +92,9 @@ monsters.json                静态怪物图鉴
 ### 场景地图
 - `GET /api/scene`
 - `POST /api/scene/image|token|sync-pcs|clear`（KP）
+- `POST /api/scene/fog/toggle` `{ enabled }`（KP）— 开关战争迷雾
+- `POST /api/scene/fog/paint` `{ cells: [[x,y],...], reveal }`（KP）— 按格子揭开/遮盖
+- `POST /api/scene/fog/reset` `{ reveal }`（KP）— 全图揭开/遮盖
 
 ### 房间时间线
 - `GET /api/timeline` — 房间内成员查看；KP 获得管理权限
@@ -101,6 +105,11 @@ monsters.json                静态怪物图鉴
 - `GET /api/handouts?since=` — PL 看自己的；KP 看全部含已撤回
 - `POST /api/handouts` — KP 发放 `{ title, body, targets, image_b64? }`
 - `POST /api/handouts/revoke|read`
+
+### NPC 生成
+- `GET /api/room/npcs` — KP 查看本房间已生成的 NPC 列表
+- `POST /api/room/npc/generate` — KP 按文字描述生成 NPC `{ name, description }`；纯规则/关键词引擎（无外部 AI 调用）：按 CoC7 规则随机 3D6/2D6+6 生成九维属性，依关键词（体格/性格/职业词）做加成，按职业关键词匹配技能组，性格由关键词命中的特质句拼接，返回含属性、技能、性格、HP/SAN/MP 的完整 NPC
+- `POST /api/room/npc/delete` — KP 删除 NPC `{ id }`
 
 ## 房间数据结构（`rooms.json` 单房间）
 
@@ -139,8 +148,12 @@ monsters.json                静态怪物图鉴
 4. 人物卡 xlsx 导入、KP 改 HP/SAN
 5. 战斗：地图、玩家、怪物图鉴、回合、HP、技能检定、结束 HP 回写
 6. 场景地图：KP 上传背景、拖拽 PC/NPC 棋子，PL 只读
-7. 房间时间线：KP 手动控制剧情节点，PL 同步只读查看
-8. 线索手札：KP 向指定/全体 PL 发文字+图，PL 未读角标
+7. 战争迷雾：KP 开关、20x14 网格画笔揭开/遮盖、一键全揭/全遮；PL 未揭开区域全黑且遮挡棋子
+8. KP 快速检定面板：常用检定一键投骰，支持自定义检定并保存在本地（localStorage）
+9. 房间时间线：KP 手动控制剧情节点，PL 同步只读查看
+10. 线索手札：KP 向指定/全体 PL 发文字+图，PL 未读角标
+11. 对抗检定：KP 发起玩家/怪物NPC/自定义任意两方对抗，自动判定胜负并显示在骰点记录
+12. NPC 生成：KP 按文字描述一键生成 NPC（关键词规则引擎，非 AI），含九维属性、技能列表、性格描述，房间内可管理增删
 
 ## 常见坑
 

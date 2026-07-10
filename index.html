@@ -125,6 +125,7 @@
           <button id="timelineBtn" type="button" class="btn-small hidden">时间线</button>
           <button id="handoutBtn" type="button" class="btn-small handout-btn hidden">线索<span id="handoutBadge" class="handout-badge hidden"></span></button>
           <button id="backpackBtn" type="button" class="btn-small hidden">背包</button>
+          <button id="npcBtn" type="button" class="btn-small btn-staff hidden">NPC</button>
           <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
           <button id="charBtn" type="button" class="btn-small">人物卡</button>
           <button id="logoutBtn" type="button" class="btn-small">退出</button>
@@ -231,6 +232,43 @@
         <button type="button" class="dice-btn" data-dice="d100">1D100</button>
         <button type="button" class="dice-btn" data-dice="d6">1D6</button>
         <button type="button" class="dice-btn" data-dice="d4">1D4</button>
+      </div>
+      <div id="opposedRollSection" class="opposed-roll-section hidden">
+        <button type="button" id="opposedRollToggleBtn" class="handout-submit-btn opposed-toggle-btn">⚔ 发起对抗检定</button>
+        <div id="opposedRollForm" class="opposed-roll-form hidden">
+          <div class="handout-form-title">对抗检定</div>
+          <div class="opposed-sides">
+            <div class="opposed-side" data-side="a">
+              <div class="opposed-side-title">甲方</div>
+              <select id="opposedATypeSelect" class="handout-input opposed-type-select">
+                <option value="player">玩家</option>
+                <option value="monster">怪物/NPC</option>
+                <option value="custom">自定义</option>
+              </select>
+              <select id="opposedAPcSelect" class="handout-input"></select>
+              <select id="opposedAMonsterSelect" class="handout-input hidden"></select>
+              <select id="opposedASkillSelect" class="handout-input"></select>
+              <input id="opposedACustomLabel" type="text" class="handout-input hidden" maxlength="30" placeholder="名称（如：暗影窥视者）">
+              <input id="opposedACustomValue" type="number" class="handout-input hidden" min="0" max="999" placeholder="数值 0-999">
+            </div>
+            <div class="opposed-vs">VS</div>
+            <div class="opposed-side" data-side="b">
+              <div class="opposed-side-title">乙方</div>
+              <select id="opposedBTypeSelect" class="handout-input opposed-type-select">
+                <option value="player">玩家</option>
+                <option value="monster">怪物/NPC</option>
+                <option value="custom">自定义</option>
+              </select>
+              <select id="opposedBPcSelect" class="handout-input"></select>
+              <select id="opposedBMonsterSelect" class="handout-input hidden"></select>
+              <select id="opposedBSkillSelect" class="handout-input"></select>
+              <input id="opposedBCustomLabel" type="text" class="handout-input hidden" maxlength="30" placeholder="名称（如：值夜的守卫）">
+              <input id="opposedBCustomValue" type="number" class="handout-input hidden" min="0" max="999" placeholder="数值 0-999">
+            </div>
+          </div>
+          <button type="button" id="opposedRollSubmitBtn" class="handout-submit-btn">掷骰对抗</button>
+          <div id="opposedRollError" class="handout-form-error"></div>
+        </div>
       </div>
     </div>
 
@@ -376,6 +414,35 @@
       <div id="backpackListSection" class="backpack-list-section">
         <div id="backpackListTitle" class="handout-list-title">我的背包</div>
         <div id="backpackList" class="backpack-list">
+          <div class="handout-empty">加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="npcPanel" class="npc-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">NPC 生成</div>
+          <div class="char-subtitle">按文字描述生成 NPC · 含属性、技能与性格（仅 KP 可见）</div>
+        </div>
+        <button id="npcBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="npcKpForm" class="handout-kp-form">
+        <div class="handout-form-title">生成 NPC</div>
+        <label class="handout-field">
+          <span class="handout-field-label">名称</span>
+          <input id="npcNameInput" type="text" class="handout-input" maxlength="30" placeholder="例如：老码头看守人">
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">描述</span>
+          <textarea id="npcDescInput" class="handout-textarea" maxlength="300" placeholder="例如：一个强壮多疑的老水手，年轻时当过警探，如今在码头做守夜人"></textarea>
+        </label>
+        <button id="npcGenerateBtn" type="button" class="handout-submit-btn">生成 NPC</button>
+        <div id="npcFormError" class="handout-form-error"></div>
+      </div>
+      <div id="npcListSection" class="handout-list-section">
+        <div class="handout-list-title">已生成 NPC</div>
+        <div id="npcList" class="npc-list">
           <div class="handout-empty">加载中…</div>
         </div>
       </div>
@@ -529,6 +596,29 @@
     const rollLogHint = document.getElementById('rollLogHint');
     const secretRollRow = document.getElementById('secretRollRow');
     const secretRollToggle = document.getElementById('secretRollToggle');
+    const opposedRollSection = document.getElementById('opposedRollSection');
+    const opposedRollToggleBtn = document.getElementById('opposedRollToggleBtn');
+    const opposedRollForm = document.getElementById('opposedRollForm');
+    const opposedRollSubmitBtn = document.getElementById('opposedRollSubmitBtn');
+    const opposedRollError = document.getElementById('opposedRollError');
+    const opposedSideEls = {
+      a: {
+        type: document.getElementById('opposedATypeSelect'),
+        pc: document.getElementById('opposedAPcSelect'),
+        monster: document.getElementById('opposedAMonsterSelect'),
+        skill: document.getElementById('opposedASkillSelect'),
+        customLabel: document.getElementById('opposedACustomLabel'),
+        customValue: document.getElementById('opposedACustomValue'),
+      },
+      b: {
+        type: document.getElementById('opposedBTypeSelect'),
+        pc: document.getElementById('opposedBPcSelect'),
+        monster: document.getElementById('opposedBMonsterSelect'),
+        skill: document.getElementById('opposedBSkillSelect'),
+        customLabel: document.getElementById('opposedBCustomLabel'),
+        customValue: document.getElementById('opposedBCustomValue'),
+      },
+    };
     const combatBtn = document.getElementById('combatBtn');
     const combatPanel = document.getElementById('combatPanel');
     const combatContent = document.getElementById('combatContent');
@@ -577,6 +667,14 @@
     const handoutFormError = document.getElementById('handoutFormError');
     const handoutListTitle = document.getElementById('handoutListTitle');
     const handoutList = document.getElementById('handoutList');
+    const npcBtn = document.getElementById('npcBtn');
+    const npcPanel = document.getElementById('npcPanel');
+    const npcBackBtn = document.getElementById('npcBackBtn');
+    const npcNameInput = document.getElementById('npcNameInput');
+    const npcDescInput = document.getElementById('npcDescInput');
+    const npcGenerateBtn = document.getElementById('npcGenerateBtn');
+    const npcFormError = document.getElementById('npcFormError');
+    const npcList = document.getElementById('npcList');
     const handoutDetailModal = document.getElementById('handoutDetailModal');
     const handoutDetailBackdrop = document.getElementById('handoutDetailBackdrop');
     const handoutDetailCloseBtn = document.getElementById('handoutDetailCloseBtn');
@@ -620,6 +718,7 @@
     let activePcId = null;
     let activePcSummary = null;
     let currentRoom = null;
+    let currentUsername = null;
     let canSecretRoll = false;
     let pendingDeleteRoomId = null;
     let lastRollId = 0;
@@ -634,6 +733,8 @@
     let sceneState = null;
     let sceneCanManage = false;
     let sceneDragState = null;
+    let sceneFogPaintState = null;
+    let sceneFogMode = 'reveal';
     let timelinePollTimer = null;
     let timelineState = null;
     let timelineCanManage = false;
@@ -644,8 +745,11 @@
     let lastHandoutId = 0;
     let pendingHandoutImageFile = null;
     const ROLL_POLL_MS = 2000;
+    const PORTRAIT_DESCRIPTION_MAX = 200;
     const COMBAT_POLL_MS = 2000;
     const SCENE_POLL_MS = 2000;
+    const FOG_COLS = 20;
+    const FOG_ROWS = 14;
     const TIMELINE_POLL_MS = 2000;
     const HANDOUT_POLL_MS = 2000;
 
@@ -747,6 +851,7 @@
       scenePanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       pcPanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       authError.textContent = '';
@@ -815,6 +920,7 @@
       scenePanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       pcPlDisplay.textContent = username || usernameDisplay.textContent;
       pcPanelSubtitle.textContent = fromApp
@@ -951,6 +1057,7 @@
       scenePanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       roomUsernameDisplay.textContent = username;
       updateRoomLobbyRole(role);
@@ -1115,6 +1222,11 @@
       roomBadge.textContent = ` · ${currentRoom.name}`;
       handoutBtn.classList.toggle('hidden', !currentRoom);
       secretRollRow.classList.toggle('hidden', !canSecretRoll);
+      opposedRollSection.classList.toggle('hidden', !canSecretRoll);
+      if (!canSecretRoll) {
+        opposedRollForm.classList.add('hidden');
+      }
+      npcBtn.classList.toggle('hidden', !canSecretRoll);
       rollLogHint.textContent = canSecretRoll
         ? '公开骰点所有人可见 · 暗骰对玩家隐藏结果'
         : '公开骰点所有人可见 · KP 暗骰时结果不可见';
@@ -1411,6 +1523,7 @@
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       timelinePanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
       timelineCurrent.innerHTML = '<div class="timeline-empty">加载时间线…</div>';
@@ -1838,6 +1951,7 @@
       combatPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       handoutPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
 
@@ -1861,16 +1975,23 @@
       }
     }
 
+    const OPPOSED_RESULT_LABELS = { win: '胜', lose: '负', draw: '平' };
+
     function appendRollToLog(roll, prepend) {
       const item = document.createElement('div');
-      item.className = `roll-log-item${roll.hidden ? ' secret' : ''}`;
+      const isOpposed = roll.opposed_group_id != null;
+      item.className = `roll-log-item${roll.hidden ? ' secret' : ''}${isOpposed ? ' opposed' : ''}`;
       item.dataset.rollId = roll.id;
+      if (isOpposed) item.dataset.opposedGroup = roll.opposed_group_id;
 
       const valueHidden = !!roll.value_hidden;
       const checkInfo = !valueHidden && roll.check_label
         ? `<span class="roll-log-check ${escapeHtml(roll.check_type || '')}">${escapeHtml(roll.check_label)}</span>`
         : '';
       const secretTag = roll.hidden ? '<span class="roll-log-secret-tag">暗骰</span>' : '';
+      const opposedTag = isOpposed && roll.opposed_result
+        ? `<span class="roll-log-opposed-tag ${escapeHtml(roll.opposed_result)}">${escapeHtml(OPPOSED_RESULT_LABELS[roll.opposed_result] || '')}</span>`
+        : '';
       const skillInfo = !valueHidden && roll.skill_value != null
         ? ` · 鉴定 ${roll.skill_value}`
         : roll.hidden && valueHidden
@@ -1882,6 +2003,7 @@
         <div class="roll-log-item-head">
           <span class="roll-log-roller">${escapeHtml(roll.roller)}</span>
           ${secretTag}
+          ${opposedTag}
           <span class="roll-log-time">${escapeHtml(formatRollTime(roll.timestamp))}</span>
         </div>
         <div class="roll-log-item-body">
@@ -2017,6 +2139,15 @@
           name: npc.displayName,
           subtitle: npc.subtitle || 'NPC',
         });
+        return;
+      }
+
+      if (currentCharacter?.portrait) {
+        showPortraitModal({
+          portrait: `/assets/${currentCharacter.portrait}`,
+          name: profile?.name || key,
+          subtitle: profile?.occupation || '',
+        });
       }
     }
 
@@ -2027,15 +2158,16 @@
 
     function updateInvestigatorBanner(username, profile) {
       const pc = getPcMeta(username);
-      if (!pc) {
+      const generatedPortrait = currentCharacter?.portrait ? `/assets/${currentCharacter.portrait}` : null;
+      if (!pc && !generatedPortrait) {
         investigatorBanner.classList.add('hidden');
         return;
       }
 
-      const name = profile?.name || pc.displayName;
-      const occ = profile?.occupation || pc.occupation;
+      const name = profile?.name || pc?.displayName || username;
+      const occ = profile?.occupation || pc?.occupation || '';
 
-      investigatorPortraitImg.src = pc.portrait;
+      investigatorPortraitImg.src = pc?.portrait || generatedPortrait;
       investigatorPortraitImg.alt = `${name} 肖像`;
       investigatorName.textContent = name;
       investigatorOcc.textContent = occ;
@@ -2057,10 +2189,11 @@
     async function loadCharacterData() {
       if (currentUserRole === 'admin' || currentUserRole === 'kp') {
         currentCharacter = null;
-        const kpHint = currentRoom
-          ? 'KP 模式 · 可使用自由投骰（暗骰对玩家隐藏结果）'
-          : '管理员 / KP 模式，请使用「玩家信息」';
-        skillActionsEl.innerHTML = `<div class="skill-empty">${kpHint}</div>`;
+        if (currentRoom) {
+          renderKpQuickRolls();
+        } else {
+          skillActionsEl.innerHTML = '<div class="skill-empty">管理员 / KP 模式，请使用「玩家信息」</div>';
+        }
         attrActionsEl.innerHTML = '<div class="skill-empty">—</div>';
         return;
       }
@@ -2130,13 +2263,116 @@
       });
     }
 
+    const KP_QUICK_ROLL_PRESETS = [
+      { name: '聆听', value: 25 },
+      { name: '侦查', value: 25 },
+      { name: '潜行', value: 20 },
+      { name: '图书馆使用', value: 20 },
+      { name: '说服', value: 10 },
+      { name: '恐吓', value: 15 },
+      { name: '急救', value: 30 },
+      { name: '心理学', value: 10 },
+      { name: '神秘学', value: 5 },
+      { name: '闪避', value: 25 },
+    ];
+
+    function kpQuickRollStorageKey() {
+      return `htmldice_kp_quickrolls_${currentUsername || 'kp'}`;
+    }
+
+    function loadKpCustomRolls() {
+      try {
+        const raw = localStorage.getItem(kpQuickRollStorageKey());
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveKpCustomRolls(list) {
+      try {
+        localStorage.setItem(kpQuickRollStorageKey(), JSON.stringify(list));
+      } catch (error) {
+        // 本地存储不可用时静默忽略
+      }
+    }
+
+    function renderKpQuickRolls() {
+      const custom = loadKpCustomRolls();
+      const presetHtml = KP_QUICK_ROLL_PRESETS.map(
+        (item, index) => `
+          <button type="button" class="skill-check-btn kp-quickroll-btn" data-kind="preset" data-index="${index}">
+            <span class="skill-btn-name">${escapeHtml(item.name)}</span><span class="skill-btn-val">${item.value}</span>
+          </button>
+        `
+      ).join('');
+      const customHtml = custom
+        .map(
+          (item, index) => `
+            <button type="button" class="skill-check-btn kp-quickroll-btn kp-quickroll-btn--custom" data-kind="custom" data-index="${index}">
+              <span class="skill-btn-name">${escapeHtml(item.name)}</span><span class="skill-btn-val">${escapeHtml(item.value)}</span>
+              <span class="kp-quickroll-remove" data-index="${index}" title="删除">×</span>
+            </button>
+          `
+        )
+        .join('');
+      skillActionsEl.innerHTML = `
+        <div class="kp-quickroll-hint">KP 快速检定 · 点击直接投骰（可配合暗骰开关）</div>
+        <div class="kp-quickroll-grid">
+          ${presetHtml}
+          ${customHtml}
+          <button type="button" class="skill-check-btn kp-quickroll-add" id="kpQuickRollAddBtn">+ 自定义</button>
+        </div>
+      `;
+
+      skillActionsEl.querySelectorAll('.kp-quickroll-btn').forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+          if (event.target.closest('.kp-quickroll-remove')) return;
+          const kind = btn.dataset.kind;
+          const index = Number(btn.dataset.index);
+          const item = kind === 'preset' ? KP_QUICK_ROLL_PRESETS[index] : loadKpCustomRolls()[index];
+          if (!item) return;
+          performD100Check(item.name, Number(item.value));
+        });
+      });
+
+      skillActionsEl.querySelectorAll('.kp-quickroll-remove').forEach((el) => {
+        el.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const index = Number(el.dataset.index);
+          const list = loadKpCustomRolls();
+          list.splice(index, 1);
+          saveKpCustomRolls(list);
+          renderKpQuickRolls();
+        });
+      });
+
+      document.getElementById('kpQuickRollAddBtn')?.addEventListener('click', () => {
+        const name = prompt('检定名称（如：聆听）');
+        if (!name || !name.trim()) return;
+        const valueRaw = prompt('目标值（如：50）');
+        const value = Number(valueRaw);
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          alert('请输入 0-100 的数字');
+          return;
+        }
+        const list = loadKpCustomRolls();
+        list.push({ name: name.trim(), value });
+        saveKpCustomRolls(list);
+        renderKpQuickRolls();
+      });
+    }
+
     function showApp(username, role) {
+      currentUsername = username;
       authPanel.classList.add('hidden');
       roomPanel.classList.add('hidden');
       appPanel.classList.remove('hidden');
       charPanel.classList.add('hidden');
       playersPanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       usernameDisplay.textContent = username;
@@ -2226,7 +2462,7 @@
       sceneState = data.scene;
       updateSceneEntry();
       if (!scenePanel.classList.contains('hidden')) {
-        if (sceneDragState) return;
+        if (sceneDragState || sceneFogPaintState) return;
         if (prevUpdated !== sceneState?.updated_at || !sceneContent.childElementCount) {
           renderScenePanel(data);
         }
@@ -2239,6 +2475,7 @@
       playersPanel.classList.add('hidden');
       combatPanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       scenePanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
@@ -2270,6 +2507,8 @@
         return;
       }
 
+      const fog = scene?.fog || null;
+      const fogEnabled = !!fog;
       const toolbar = canManage
         ? `
           <div class="scene-toolbar">
@@ -2277,6 +2516,19 @@
             <button id="sceneAddNpcBtn" type="button" class="btn-small">添加 NPC</button>
             <button id="sceneSyncPcBtn" type="button" class="btn-small">同步房间 PC</button>
             <button id="sceneClearBtn" type="button" class="btn-small scene-clear-btn">清空场景</button>
+          </div>
+          <div class="scene-toolbar scene-fog-toolbar">
+            <button id="sceneFogToggleBtn" type="button" class="btn-small${fogEnabled ? ' scene-fog-active' : ''}">${fogEnabled ? '关闭战争迷雾' : '开启战争迷雾'}</button>
+            ${
+              fogEnabled
+                ? `
+                  <button id="sceneFogModeRevealBtn" type="button" class="btn-small${sceneFogMode === 'reveal' ? ' scene-fog-active' : ''}">画笔：揭开</button>
+                  <button id="sceneFogModeHideBtn" type="button" class="btn-small${sceneFogMode === 'hide' ? ' scene-fog-active' : ''}">画笔：遮盖</button>
+                  <button id="sceneFogRevealAllBtn" type="button" class="btn-small">全部揭开</button>
+                  <button id="sceneFogHideAllBtn" type="button" class="btn-small">全部遮盖</button>
+                `
+                : ''
+            }
           </div>
         `
         : '';
@@ -2296,7 +2548,11 @@
         : '';
 
       const imgUrl = sceneImageUrl(scene);
-      const tokens = scene?.tokens || [];
+      const allTokens = scene?.tokens || [];
+      const tokens =
+        fogEnabled && !canManage
+          ? allTokens.filter((token) => isFogCellRevealed(fog, token.x, token.y))
+          : allTokens;
       const tokensHtml = tokens
         .map(
           (token) => `
@@ -2324,6 +2580,7 @@
                 : '<div class="scene-placeholder">上传背景图后开始摆放棋子</div>'
             }
             ${tokensHtml}
+            ${fogEnabled ? renderFogLayer(fog, canManage) : ''}
           </div>
         </div>
       `;
@@ -2331,6 +2588,39 @@
       if (canManage) {
         bindScenePanelEvents();
       }
+    }
+
+    function isFogCellRevealed(fog, x, y) {
+      if (!fog) return true;
+      const cols = fog.cols || FOG_COLS;
+      const rows = fog.rows || FOG_ROWS;
+      const cx = Math.min(cols - 1, Math.max(0, Math.floor(clamp01(x) * cols)));
+      const cy = Math.min(rows - 1, Math.max(0, Math.floor(clamp01(y) * rows)));
+      const revealed = fog.revealed || '';
+      return revealed[cy * cols + cx] === '1';
+    }
+
+    function renderFogLayer(fog, canManage) {
+      const cols = fog.cols || FOG_COLS;
+      const rows = fog.rows || FOG_ROWS;
+      const revealed = fog.revealed || '';
+      let cellsHtml = '';
+      for (let cy = 0; cy < rows; cy += 1) {
+        for (let cx = 0; cx < cols; cx += 1) {
+          const isRevealed = revealed[cy * cols + cx] === '1';
+          const cls = isRevealed ? 'scene-fog-cell scene-fog-cell--revealed' : 'scene-fog-cell';
+          cellsHtml += `<div class="${cls}" data-cx="${cx}" data-cy="${cy}"></div>`;
+        }
+      }
+      return `
+        <div
+          id="sceneFogLayer"
+          class="scene-fog-layer${canManage ? ' scene-fog-layer--kp' : ' scene-fog-layer--pl'}"
+          style="grid-template-columns:repeat(${cols}, 1fr);grid-template-rows:repeat(${rows}, 1fr)"
+        >
+          ${cellsHtml}
+        </div>
+      `;
     }
 
     function clamp01(value) {
@@ -2345,12 +2635,26 @@
       const generateBtn = document.getElementById('sceneGenerateBtn');
       const promptInput = document.getElementById('scenePromptInput');
       const stage = document.getElementById('sceneStage');
+      const fogToggleBtn = document.getElementById('sceneFogToggleBtn');
+      const fogModeRevealBtn = document.getElementById('sceneFogModeRevealBtn');
+      const fogModeHideBtn = document.getElementById('sceneFogModeHideBtn');
+      const fogRevealAllBtn = document.getElementById('sceneFogRevealAllBtn');
+      const fogHideAllBtn = document.getElementById('sceneFogHideAllBtn');
+      const fogLayer = document.getElementById('sceneFogLayer');
 
       uploadBtn?.addEventListener('click', () => sceneFileInput.click());
       addNpcBtn?.addEventListener('click', addSceneNpcToken);
       syncPcBtn?.addEventListener('click', syncScenePcTokens);
       clearBtn?.addEventListener('click', clearScene);
       generateBtn?.addEventListener('click', generateSceneMap);
+      fogToggleBtn?.addEventListener('click', toggleSceneFog);
+      fogModeRevealBtn?.addEventListener('click', () => setSceneFogMode('reveal'));
+      fogModeHideBtn?.addEventListener('click', () => setSceneFogMode('hide'));
+      fogRevealAllBtn?.addEventListener('click', () => resetSceneFog(true));
+      fogHideAllBtn?.addEventListener('click', () => resetSceneFog(false));
+      if (fogLayer) {
+        fogLayer.addEventListener('pointerdown', (event) => startFogPaint(event, fogLayer));
+      }
       promptInput?.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
           event.preventDefault();
@@ -2514,6 +2818,104 @@
       renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
     }
 
+    async function toggleSceneFog() {
+      const enabled = !sceneState?.fog;
+      const { data } = await api('/api/scene/fog/toggle', {
+        method: 'POST',
+        body: JSON.stringify({ enabled }),
+      });
+      if (!data.ok) {
+        alert(data.error || '操作失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    function setSceneFogMode(mode) {
+      sceneFogMode = mode;
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    async function resetSceneFog(reveal) {
+      const { data } = await api('/api/scene/fog/reset', {
+        method: 'POST',
+        body: JSON.stringify({ reveal }),
+      });
+      if (!data.ok) {
+        alert(data.error || '操作失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    function cellFromPointer(event, fogLayer, fog) {
+      const rect = fogLayer.getBoundingClientRect();
+      const cols = fog.cols || FOG_COLS;
+      const rows = fog.rows || FOG_ROWS;
+      const cx = Math.min(cols - 1, Math.max(0, Math.floor(((event.clientX - rect.left) / rect.width) * cols)));
+      const cy = Math.min(rows - 1, Math.max(0, Math.floor(((event.clientY - rect.top) / rect.height) * rows)));
+      return { cx, cy };
+    }
+
+    function paintFogCellLocal(fogLayer, cx, cy, reveal) {
+      const cell = fogLayer.querySelector(`.scene-fog-cell[data-cx="${cx}"][data-cy="${cy}"]`);
+      if (cell) cell.classList.toggle('scene-fog-cell--revealed', reveal);
+    }
+
+    function startFogPaint(event, fogLayer) {
+      if (!sceneCanManage || event.button !== 0 || !sceneState?.fog) return;
+      event.preventDefault();
+      const reveal = sceneFogMode === 'reveal';
+      const painted = new Set();
+      sceneFogPaintState = { pointerId: event.pointerId, reveal, cells: painted };
+      fogLayer.setPointerCapture(event.pointerId);
+
+      const paintAt = (evt) => {
+        const { cx, cy } = cellFromPointer(evt, fogLayer, sceneState.fog);
+        const key = `${cx},${cy}`;
+        if (!painted.has(key)) {
+          painted.add(key);
+          paintFogCellLocal(fogLayer, cx, cy, reveal);
+        }
+      };
+      paintAt(event);
+
+      const onMove = (moveEvent) => {
+        if (!sceneFogPaintState || moveEvent.pointerId !== sceneFogPaintState.pointerId) return;
+        paintAt(moveEvent);
+      };
+
+      const onUp = async (upEvent) => {
+        if (!sceneFogPaintState || upEvent.pointerId !== sceneFogPaintState.pointerId) return;
+        fogLayer.releasePointerCapture(upEvent.pointerId);
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        const cells = Array.from(painted).map((key) => key.split(',').map(Number));
+        sceneFogPaintState = null;
+        if (!cells.length) return;
+        const { data } = await api('/api/scene/fog/paint', {
+          method: 'POST',
+          body: JSON.stringify({ cells, reveal }),
+        });
+        if (!data.ok) {
+          alert(data.error || '涂抹迷雾失败');
+          renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+          return;
+        }
+        sceneState = data.scene;
+        updateSceneEntry();
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    }
+
     async function clearScene() {
       if (!confirm('确定清空场景图与所有棋子？')) return;
       const { data } = await api('/api/scene/clear', { method: 'POST', body: '{}' });
@@ -2631,6 +3033,7 @@
       playersPanel.classList.add('hidden');
       scenePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       combatPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
@@ -2855,6 +3258,7 @@
             <input id="monsterNameInput" class="auth-input" type="text" maxlength="30" placeholder="怪物名称">
             <input id="monsterDexInput" class="auth-input" type="number" min="0" max="999" placeholder="敏捷">
             <input id="monsterHpInput" class="auth-input" type="number" min="1" max="9999" placeholder="血量">
+            <input id="monsterPortraitDescInput" class="auth-input" type="text" maxlength="200" placeholder="外貌描述（可选，用于生成头像）">
             <button id="addMonsterBtn" type="button" class="btn-small">添加怪物</button>
           </div>
           <div id="setupMonsterList" class="combat-entity-list">
@@ -2949,10 +3353,12 @@
           setupError.textContent = '请填写有效的敏捷与血量';
           return;
         }
-        setupMonsters.push({ name, dex, hp });
+        const portraitDescription = document.getElementById('monsterPortraitDescInput').value.trim();
+        setupMonsters.push({ name, dex, hp, portrait_description: portraitDescription });
         document.getElementById('monsterNameInput').value = '';
         document.getElementById('monsterDexInput').value = '';
         document.getElementById('monsterHpInput').value = '';
+        document.getElementById('monsterPortraitDescInput').value = '';
         renderSetupMonsters();
       });
 
@@ -3084,14 +3490,20 @@
                 <input id="liveMonsterName" class="auth-input" type="text" maxlength="30" placeholder="怪物名称">
                 <input id="liveMonsterDex" class="auth-input" type="number" min="0" placeholder="敏捷">
                 <input id="liveMonsterHp" class="auth-input" type="number" min="1" placeholder="血量">
+                <input id="liveMonsterPortraitDesc" class="auth-input" type="text" maxlength="200" placeholder="外貌描述（可选，用于生成头像）">
                 <button id="liveAddMonsterBtn" type="button" class="btn-small">添加</button>
               </div>
             ` : ''}
             <div class="combat-entity-list">
               ${combat.monsters.map((monster) => `
                 <div class="combat-entity-card combat-entity-card--monster${monster.alive && !monster.dead ? '' : ' dead'}">
-                  <div class="combat-entity-name">${escapeHtml(monster.name)}</div>
-                  <div class="combat-entity-meta">敏捷 ${escapeHtml(monster.dex)} · HP ${escapeHtml(combatHpText(monster))}${monster.dead ? ' · 已死亡' : ''}</div>
+                  <div class="combat-entity-head">
+                    ${monster.image ? `<img class="combat-entity-portrait" src="/assets/${escapeHtml(monster.image)}" alt="${escapeHtml(monster.name)} 头像">` : ''}
+                    <div>
+                      <div class="combat-entity-name">${escapeHtml(monster.name)}</div>
+                      <div class="combat-entity-meta">敏捷 ${escapeHtml(monster.dex)} · HP ${escapeHtml(combatHpText(monster))}${monster.dead ? ' · 已死亡' : ''}</div>
+                    </div>
+                  </div>
                   ${canManage ? `<div class="combat-bestiary-skills-label">技能</div><div class="combat-skill-chips">${renderMonsterSkillChips(monster.skills)}</div>` : ''}
                   ${renderMonsterSkillButtons(monster, canManage)}
                   ${renderCombatEntityControls('monster', monster, canManage)}
@@ -3243,11 +3655,12 @@
       const name = document.getElementById('liveMonsterName')?.value.trim();
       const dex = Number(document.getElementById('liveMonsterDex')?.value);
       const hp = Number(document.getElementById('liveMonsterHp')?.value);
+      const portraitDescription = document.getElementById('liveMonsterPortraitDesc')?.value.trim() || '';
       if (!name || !Number.isFinite(dex) || !Number.isFinite(hp) || hp <= 0) {
         alert('请填写有效的怪物信息');
         return;
       }
-      await addLiveMonsterPayload({ name, dex, hp, skills: [] });
+      await addLiveMonsterPayload({ name, dex, hp, skills: [], portrait_description: portraitDescription });
     }
 
     function showEndCombatModal() {
@@ -3309,6 +3722,7 @@
       scenePanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       charPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
     }
@@ -3320,6 +3734,7 @@
       scenePanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       playersPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
     }
@@ -3331,10 +3746,117 @@
       scenePanel.classList.add('hidden');
       timelinePanel.classList.add('hidden');
       handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       appPanel.classList.remove('hidden');
       cardEl.classList.remove('sheet-mode');
       charViewSource = 'dice';
       viewingTarget = null;
+    }
+
+    function showNpcView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+    }
+
+    function renderNpcCheckRow(label, value) {
+      return `<div class="npc-check-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+    }
+
+    function renderNpcCard(npc) {
+      const attrsHtml = (npc.attributes || [])
+        .map((attr) => renderNpcCheckRow(attr.label, attr.value))
+        .join('');
+      const skillsHtml = (npc.skills || [])
+        .map((skill) => renderNpcCheckRow(skill.name, skill.value))
+        .join('');
+      const portraitImg = npc.portrait
+        ? `<img class="npc-card-portrait" src="/assets/${escapeHtml(npc.portrait)}" alt="${escapeHtml(npc.name)} 头像">`
+        : '';
+      return `
+        <div class="npc-card" data-npc-id="${escapeHtml(npc.id)}">
+          <div class="npc-card-head">
+            ${portraitImg}
+            <div class="npc-card-head-info">
+              <div class="npc-card-name">${escapeHtml(npc.name)}</div>
+              <div class="npc-card-occ">${escapeHtml(npc.occupation || '')}</div>
+            </div>
+            <button type="button" class="btn-small npc-delete-btn" data-npc-id="${escapeHtml(npc.id)}">删除</button>
+          </div>
+          <div class="npc-card-stats">HP ${escapeHtml(npc.hp)}/${escapeHtml(npc.hp_max)} · SAN ${escapeHtml(npc.san)}/${escapeHtml(npc.san_max)} · MP ${escapeHtml(npc.mp)}</div>
+          <div class="npc-card-desc">${escapeHtml(npc.description || '')}</div>
+          <div class="npc-card-personality">${escapeHtml(npc.personality || '')}</div>
+          <div class="npc-card-section-label">基础属性</div>
+          <div class="npc-check-grid">${attrsHtml}</div>
+          <div class="npc-card-section-label">技能</div>
+          <div class="npc-check-grid">${skillsHtml}</div>
+        </div>
+      `;
+    }
+
+    async function loadNpcList() {
+      npcList.innerHTML = '<div class="handout-empty">加载中…</div>';
+      const { data } = await api('/api/room/npcs');
+      if (!data.ok) {
+        npcList.innerHTML = `<div class="handout-empty">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+      if (!data.npcs.length) {
+        npcList.innerHTML = '<div class="handout-empty">尚未生成 NPC</div>';
+        return;
+      }
+      npcList.innerHTML = data.npcs
+        .slice()
+        .reverse()
+        .map(renderNpcCard)
+        .join('');
+      npcList.querySelectorAll('.npc-delete-btn').forEach((btn) => {
+        btn.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          const npcId = Number(btn.dataset.npcId);
+          const { data: delData } = await api('/api/room/npc/delete', {
+            method: 'POST',
+            body: JSON.stringify({ id: npcId }),
+          });
+          if (!delData.ok) {
+            alert(delData.error || '删除失败');
+            return;
+          }
+          loadNpcList();
+        });
+      });
+    }
+
+    async function generateNpc() {
+      npcFormError.textContent = '';
+      const name = npcNameInput.value.trim();
+      const description = npcDescInput.value.trim();
+      if (!description) {
+        npcFormError.textContent = '请输入 NPC 描述';
+        return;
+      }
+      npcGenerateBtn.disabled = true;
+      try {
+        const { data } = await api('/api/room/npc/generate', {
+          method: 'POST',
+          body: JSON.stringify({ name, description }),
+        });
+        if (!data.ok) {
+          npcFormError.textContent = data.error || '生成失败';
+          return;
+        }
+        npcNameInput.value = '';
+        npcDescInput.value = '';
+        loadNpcList();
+      } finally {
+        npcGenerateBtn.disabled = false;
+      }
     }
 
     function escapeHtml(text) {
@@ -3467,18 +3989,29 @@
       charSubtitle.textContent = `${p.name || ''} · ${p.occupation || ''} · PL ${owner}${viewingPcId ? ` · PC` : ''}`;
 
       const sheetUsername = c.profile?.name || c.owner || usernameDisplay.textContent;
-      const portraitHero = getPcMeta(sheetUsername)
-        ? `<section class="char-portrait-hero">
+      const staticMeta = getPcMeta(sheetUsername);
+      const portraitSrc = staticMeta?.portrait || (c.portrait ? `/assets/${c.portrait}` : null);
+      const canEditPortrait = !!(canEditStatus || owner === usernameDisplay.textContent);
+      const portraitHero = `
+        <section class="char-portrait-hero">
+          ${portraitSrc ? `
             <button type="button" class="char-portrait-hero__btn" data-pc="${escapeHtml(sheetUsername)}" aria-label="查看 ${escapeHtml(p.name || sheetUsername)} 肖像">
-              <img src="${getPcMeta(sheetUsername).portrait}" alt="${escapeHtml(p.name || sheetUsername)} 肖像">
+              <img src="${escapeHtml(portraitSrc)}" alt="${escapeHtml(p.name || sheetUsername)} 肖像">
               <span class="char-portrait-hero__shine" aria-hidden="true"></span>
             </button>
             <div class="char-portrait-hero__meta">
-              <div class="char-portrait-hero__name">${escapeHtml(p.name || getPcMeta(sheetUsername).displayName)}</div>
-              <div class="char-portrait-hero__occ">${escapeHtml(p.occupation || getPcMeta(sheetUsername).occupation)}</div>
+              <div class="char-portrait-hero__name">${escapeHtml(p.name || staticMeta?.displayName || sheetUsername)}</div>
+              <div class="char-portrait-hero__occ">${escapeHtml(p.occupation || staticMeta?.occupation || '')}</div>
             </div>
-          </section>`
-        : '';
+          ` : '<div class="char-portrait-hero__placeholder">尚无头像</div>'}
+          ${canEditPortrait ? `
+            <div class="char-portrait-gen">
+              <textarea id="charPortraitDescInput" class="handout-textarea" maxlength="${PORTRAIT_DESCRIPTION_MAX}" placeholder="描述外貌用于生成头像，例如：戴圆框眼镜的中年学者，蓄着灰白胡须"></textarea>
+              <button type="button" id="charPortraitGenBtn" class="handout-submit-btn">${portraitSrc ? '重新生成头像' : '生成头像'}</button>
+              <div id="charPortraitGenError" class="handout-form-error"></div>
+            </div>
+          ` : ''}
+        </section>`;
 
       charContent.innerHTML = `
         ${renderKpControls()}
@@ -3536,7 +4069,43 @@
       bindKpControls(c);
 
       charContent.querySelector('.char-portrait-hero__btn')?.addEventListener('click', () => {
-        openPortraitModal(sheetUsername, p);
+        showPortraitModal({
+          portrait: portraitSrc,
+          name: p.name || staticMeta?.displayName || sheetUsername,
+          subtitle: p.occupation || staticMeta?.occupation || '',
+        });
+      });
+
+      document.getElementById('charPortraitGenBtn')?.addEventListener('click', async () => {
+        const btn = document.getElementById('charPortraitGenBtn');
+        const descInput = document.getElementById('charPortraitDescInput');
+        const errorEl = document.getElementById('charPortraitGenError');
+        const description = descInput?.value.trim() || '';
+        if (!description) {
+          errorEl.textContent = '请输入外貌描述';
+          return;
+        }
+        btn.disabled = true;
+        errorEl.textContent = '';
+        try {
+          const payload = { description };
+          if (viewingPcId) payload.target = viewingPcId;
+          const { data } = await api('/api/character/portrait', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          if (!data.ok) {
+            errorEl.textContent = data.error || '生成失败';
+            return;
+          }
+          const refreshed = await fetchCharacter(viewingPcId);
+          if (refreshed.data.ok) {
+            currentCharacter = refreshed.data.character;
+            renderCharacterSheet(currentCharacter);
+          }
+        } finally {
+          btn.disabled = false;
+        }
       });
     }
 
@@ -3932,6 +4501,12 @@
     timelineCancelEditBtn.addEventListener('click', resetTimelineForm);
     handoutBtn.addEventListener('click', showHandoutView);
     handoutBackBtn.addEventListener('click', showDiceView);
+    npcBtn.addEventListener('click', () => {
+      showNpcView();
+      loadNpcList();
+    });
+    npcBackBtn.addEventListener('click', showDiceView);
+    npcGenerateBtn.addEventListener('click', generateNpc);
     handoutSubmitBtn.addEventListener('click', submitHandout);
     handoutTargetAll.addEventListener('change', () => {
       const disabled = handoutTargetAll.checked;
@@ -4136,6 +4711,153 @@
       rolls.appendChild(createRoll(DICE[diceKey].label, num, 'accent', true, true, diceKey));
       resultsEl.replaceChildren(rolls);
     }
+
+    let opposedPlayersCache = [];
+
+    async function ensureOpposedPlayers() {
+      if (opposedPlayersCache.length) return opposedPlayersCache;
+      const { data } = await api('/api/players');
+      if (data.ok && data.players) opposedPlayersCache = data.players;
+      return opposedPlayersCache;
+    }
+
+    async function populateOpposedPcOptions(side) {
+      const els = opposedSideEls[side];
+      const players = await ensureOpposedPlayers();
+      els.pc.innerHTML = players.length
+        ? players
+            .map((p) => `<option value="${escapeHtml(p.pc_id)}">${escapeHtml(p.name)}（${escapeHtml(p.owner || p.username || '')}）</option>`)
+            .join('')
+        : '<option value="">暂无玩家</option>';
+    }
+
+    async function populateOpposedMonsterOptions(side) {
+      const els = opposedSideEls[side];
+      const templates = await ensureMonsterTemplates();
+      els.monster.innerHTML = templates.length
+        ? templates.map((t) => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('')
+        : '<option value="">暂无怪物</option>';
+    }
+
+    async function populateOpposedSkillsFromPc(side) {
+      const els = opposedSideEls[side];
+      const pcId = els.pc.value;
+      if (!pcId) {
+        els.skill.innerHTML = '<option value="">暂无技能</option>';
+        return;
+      }
+      els.skill.innerHTML = '<option value="">加载技能中…</option>';
+      const { data } = await fetchCharacter(pcId);
+      if (!data.ok) {
+        els.skill.innerHTML = '<option value="">加载失败</option>';
+        return;
+      }
+      const skills = data.character?.skills || [];
+      els.skill.innerHTML = skills.length
+        ? skills
+            .slice()
+            .sort((a, b) => (b.value || 0) - (a.value || 0))
+            .map((s) => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)} (${escapeHtml(s.value)})</option>`)
+            .join('')
+        : '<option value="">暂无技能</option>';
+    }
+
+    function populateOpposedSkillsFromMonster(side) {
+      const els = opposedSideEls[side];
+      const templateId = els.monster.value;
+      const template = monsterTemplates.find((t) => t.id === templateId);
+      const skills = template?.skills || [];
+      els.skill.innerHTML = skills.length
+        ? skills.map((s) => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)} (${escapeHtml(s.value)})</option>`).join('')
+        : '<option value="">暂无技能</option>';
+    }
+
+    function populateOpposedTypeFields(side) {
+      const els = opposedSideEls[side];
+      const type = els.type.value;
+      els.pc.classList.toggle('hidden', type !== 'player');
+      els.monster.classList.toggle('hidden', type !== 'monster');
+      els.skill.classList.toggle('hidden', type === 'custom');
+      els.customLabel.classList.toggle('hidden', type !== 'custom');
+      els.customValue.classList.toggle('hidden', type !== 'custom');
+      if (type === 'player') {
+        populateOpposedSkillsFromPc(side);
+      } else if (type === 'monster') {
+        populateOpposedSkillsFromMonster(side);
+      } else {
+        els.skill.innerHTML = '';
+      }
+    }
+
+    async function openOpposedRollForm() {
+      opposedRollError.textContent = '';
+      const willShow = opposedRollForm.classList.contains('hidden');
+      opposedRollForm.classList.toggle('hidden');
+      if (!willShow) return;
+      await Promise.all([
+        populateOpposedPcOptions('a'),
+        populateOpposedPcOptions('b'),
+        populateOpposedMonsterOptions('a'),
+        populateOpposedMonsterOptions('b'),
+      ]);
+      populateOpposedTypeFields('a');
+      populateOpposedTypeFields('b');
+    }
+
+    function buildOpposedSidePayload(side) {
+      const els = opposedSideEls[side];
+      const type = els.type.value;
+      if (type === 'player') {
+        return { type: 'player', pc_id: els.pc.value, skill_name: els.skill.value };
+      }
+      if (type === 'monster') {
+        return { type: 'monster', template_id: els.monster.value, skill_name: els.skill.value };
+      }
+      return {
+        type: 'custom',
+        label: els.customLabel.value.trim(),
+        skill_value: Number(els.customValue.value),
+      };
+    }
+
+    async function submitOpposedRoll() {
+      opposedRollError.textContent = '';
+      const payload = {
+        side_a: buildOpposedSidePayload('a'),
+        side_b: buildOpposedSidePayload('b'),
+      };
+      opposedRollSubmitBtn.disabled = true;
+      try {
+        const { data } = await api('/api/room/opposed', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!data.ok) {
+          opposedRollError.textContent = data.error || '对抗检定失败';
+          return;
+        }
+        const empty = rollLogContent.querySelector('.roll-log-empty');
+        if (empty) empty.remove();
+        appendRollToLog(data.side_b, true);
+        appendRollToLog(data.side_a, true);
+        lastRollId = Math.max(lastRollId, data.side_a.id, data.side_b.id);
+        opposedRollForm.classList.add('hidden');
+      } finally {
+        opposedRollSubmitBtn.disabled = false;
+      }
+    }
+
+    opposedRollToggleBtn.addEventListener('click', () => {
+      openOpposedRollForm();
+    });
+
+    Object.entries(opposedSideEls).forEach(([side, els]) => {
+      els.type.addEventListener('change', () => populateOpposedTypeFields(side));
+      els.pc.addEventListener('change', () => populateOpposedSkillsFromPc(side));
+      els.monster.addEventListener('change', () => populateOpposedSkillsFromMonster(side));
+    });
+
+    opposedRollSubmitBtn.addEventListener('click', submitOpposedRoll);
 
     async function handleSimpleRoll(diceKey) {
       if (currentRoom) {

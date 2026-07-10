@@ -209,6 +209,8 @@ def new_room_record(name, kp, permanent=False):
         "backpacks": {},
         "next_item_id": 1,
         "last_item_id": 0,
+        "npcs": [],
+        "next_npc_id": 1,
     }
     if permanent:
         room["permanent"] = True
@@ -348,6 +350,82 @@ def evaluate_skill_check(roll, skill_value):
     }
 
 
+OPPOSED_RANK = {
+    "crit_fail": 0,
+    "fail": 1,
+    "success": 2,
+    "hard": 3,
+    "extreme": 4,
+    "crit_success": 5,
+}
+
+
+def resolve_opposed_side(side, db):
+    if not isinstance(side, dict):
+        return None, "参数无效"
+    side_type = side.get("type")
+    skill_name = str(side.get("skill_name", "")).strip()
+
+    if side_type == "player":
+        pc_id = str(side.get("pc_id", "")).strip()
+        if not pc_id:
+            return None, "请选择调查员"
+        pc, _, owner = find_pc(db, pc_id)
+        if not pc:
+            return None, "人物卡不存在"
+        if not skill_name:
+            return None, "请选择技能"
+        skills = pc.get("skills", [])
+        skill = next((item for item in skills if item.get("name") == skill_name), None)
+        if not skill:
+            return None, "技能不存在"
+        try:
+            skill_value = int(skill.get("value", 0))
+        except (TypeError, ValueError):
+            return None, "技能值无效"
+        name = profile_pc_name(pc, pc_id)
+        return {"label": f"{name}·{skill_name}", "skill_value": skill_value, "owner": owner}, None
+
+    if side_type == "monster":
+        template_id = str(side.get("template_id", "")).strip()
+        if not template_id:
+            return None, "请选择怪物/NPC"
+        template = get_monster_template(template_id)
+        if not template:
+            return None, "怪物模板不存在"
+        if not skill_name:
+            return None, "请选择技能"
+        skills = template.get("skills", [])
+        skill = next((item for item in skills if item.get("name") == skill_name), None)
+        if not skill:
+            return None, "技能不存在"
+        try:
+            skill_value = int(skill.get("value", 0))
+        except (TypeError, ValueError):
+            return None, "技能值无效"
+        name = str(template.get("name") or template_id)
+        return {"label": f"{name}·{skill_name}", "skill_value": skill_value, "owner": None}, None
+
+    if side_type == "custom":
+        label = str(side.get("label", "")).strip()
+        if not label:
+            return None, "请输入名称"
+        try:
+            skill_value = int(side.get("skill_value"))
+        except (TypeError, ValueError):
+            return None, "数值无效"
+        if skill_value < 0 or skill_value > 999:
+            return None, "数值需在 0-999 之间"
+        return {"label": label, "skill_value": skill_value, "owner": None}, None
+
+    return None, "无效类型"
+
+
+def profile_pc_name(pc, pc_id):
+    profile = pc.get("profile", {})
+    return str(profile.get("name") or pc_id)
+
+
 def roll_die(dice_key):
     sides = DICE_SIDES.get(dice_key)
     if not sides:
@@ -394,6 +472,8 @@ def roll_to_client(roll, reveal_result=True):
         "label": roll["label"],
         "hidden": roll.get("hidden", False),
         "timestamp": roll.get("timestamp"),
+        "opposed_group_id": roll.get("opposed_group_id"),
+        "opposed_result": roll.get("opposed_result"),
     }
     if reveal_result:
         payload["value"] = roll["value"]
@@ -718,6 +798,8 @@ def require_room_kp(user, room_id):
 SCENES_DIR = os.path.join(DIRECTORY, "assets", "scenes")
 HANDOUTS_DIR = os.path.join(DIRECTORY, "assets", "handouts")
 ITEMS_DIR = os.path.join(DIRECTORY, "assets", "items")
+PORTRAITS_GEN_DIR = os.path.join(DIRECTORY, "assets", "portraits_gen")
+PORTRAIT_DESCRIPTION_MAX = 200
 SCENE_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 SCENE_MAX_BYTES = 5 * 1024 * 1024
 SCENE_PROMPT_MAX = 1000
@@ -743,6 +825,33 @@ def ensure_room_scene(room):
     return room.setdefault("scene", {"image": None, "tokens": [], "updated_at": None})
 
 
+FOG_COLS = 20
+FOG_ROWS = 14
+
+
+def ensure_scene_fog(scene):
+    fog = scene.get("fog")
+    if not fog:
+        fog = {
+            "enabled": False,
+            "cols": FOG_COLS,
+            "rows": FOG_ROWS,
+            "revealed": "0" * (FOG_COLS * FOG_ROWS),
+        }
+        scene["fog"] = fog
+    return fog
+
+
+def fog_to_client(fog):
+    if not fog or not fog.get("enabled"):
+        return None
+    return {
+        "cols": fog.get("cols", FOG_COLS),
+        "rows": fog.get("rows", FOG_ROWS),
+        "revealed": fog.get("revealed", ""),
+    }
+
+
 def clamp_coord(value, default=0.5):
     try:
         coord = float(value)
@@ -761,6 +870,7 @@ def scene_to_client(scene):
         "updated_at": scene.get("updated_at"),
         "generated": bool(scene.get("generated")),
         "generated_prompt": scene.get("generated_prompt", ""),
+        "fog": fog_to_client(scene.get("fog")),
     }
 
 
@@ -1595,6 +1705,429 @@ def save_generated_item_image(room_id, item_id, description):
     return f"items/{room_id}/{file_name}"
 
 
+PORTRAIT_SKIN_KEYWORDS = [
+    (("苍白", "惨白", "病态"), ("#e6d7c3", "#c9b79c")),
+    (("黝黑", "古铜", "小麦色"), ("#8a5a3a", "#6a4127")),
+    (("红润", "健康", "红光"), ("#e8b49a", "#d99678")),
+    (("灰败", "死灰", "青灰"), ("#9aa08f", "#767c6c")),
+]
+PORTRAIT_SKIN_DEFAULT = [("#d9b58f", "#c19b70"), ("#e0c19f", "#c7a37e"), ("#c68f66", "#a87450")]
+
+PORTRAIT_HAIR_KEYWORDS = [
+    (("金发",), "#c9a227"),
+    (("黑发", "乌黑"), "#1c1a17"),
+    (("白发", "花白", "银发"), "#d8d4c8"),
+    (("红发", "赤发"), "#8a3324"),
+    (("褐发", "棕发"), "#5b3a24"),
+]
+PORTRAIT_BALD_KEYWORDS = ("秃头", "光头", "秃顶")
+
+PORTRAIT_EYE_KEYWORDS = [
+    (("血红", "赤红", "猩红"), "#b3352c"),
+    (("发光", "荧光", "幽光"), "#6fe0c8"),
+    (("金色", "琥珀"), "#c9a227"),
+    (("漆黑", "深邃"), "#0c0b0a"),
+]
+PORTRAIT_EYE_DEFAULT = "#2a2420"
+
+PORTRAIT_MOOD_KEYWORDS = [
+    (("邪恶", "阴森", "诡异", "凶恶", "狰狞"), ("#1a1030", "#3a1f4a", "#8a4fd8")),
+    (("温和", "慈祥", "和善", "亲切"), ("#3a2f18", "#5a4526", "#c9a227")),
+    (("冷酷", "严肃", "冰冷"), ("#101820", "#1e2f3d", "#5fa8c9")),
+    (("神秘", "古怪"), ("#141225", "#241f3f", "#7a5fc9")),
+]
+PORTRAIT_MOOD_DEFAULT = ("#14120f", "#2a2419", "#c9a227")
+
+PORTRAIT_MONSTER_PALETTE = [
+    ("#0c1f16", "#1e4530", "#4fd88a"),
+    ("#1f0c1f", "#451e3f", "#d84fc0"),
+    ("#1c1508", "#3f2e0e", "#d8a54f"),
+    ("#0a1420", "#122b45", "#4f9fd8"),
+]
+
+
+def portrait_prompt_has(description, *keywords):
+    return any(word in description for word in keywords)
+
+
+def portrait_pick(description, keyword_table, default, rng):
+    for keywords, value in keyword_table:
+        if portrait_prompt_has(description, *keywords):
+            return value
+    if isinstance(default, list):
+        return rng.choice(default)
+    return default
+
+
+def build_human_portrait_svg(description, rng):
+    skin, skin_shadow = portrait_pick(description, PORTRAIT_SKIN_KEYWORDS, PORTRAIT_SKIN_DEFAULT, rng)
+    hair = portrait_pick(description, PORTRAIT_HAIR_KEYWORDS, rng.choice(["#1c1a17", "#3a2a1a", "#5b3a24"]), rng)
+    bald = portrait_prompt_has(description, *PORTRAIT_BALD_KEYWORDS)
+    eye = portrait_pick(description, PORTRAIT_EYE_KEYWORDS, PORTRAIT_EYE_DEFAULT, rng)
+    bg1, bg2, accent = portrait_pick(description, PORTRAIT_MOOD_KEYWORDS, PORTRAIT_MOOD_DEFAULT, rng)
+    has_beard = portrait_prompt_has(description, "胡须", "胡子", "络腮")
+    has_scar = portrait_prompt_has(description, "伤疤", "疤痕", "刀疤")
+    has_glasses = portrait_prompt_has(description, "眼镜", "墨镜")
+    has_eyepatch = portrait_prompt_has(description, "眼罩", "独眼")
+    has_hood = portrait_prompt_has(description, "兜帽", "斗篷", "头巾")
+
+    face_w = 88 + rng.randint(-6, 6)
+    face_h = 108 + rng.randint(-6, 6)
+    cx, cy = 150, 150
+
+    parts = [
+        '<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">',
+        "<defs>",
+        f'<radialGradient id="bg" cx="50%" cy="42%" r="75%">'
+        f'<stop offset="0%" stop-color="{bg2}"/><stop offset="100%" stop-color="{bg1}"/></radialGradient>',
+        "</defs>",
+        '<rect x="0" y="0" width="300" height="300" fill="url(#bg)"/>',
+        f'<rect x="6" y="6" width="288" height="288" fill="none" stroke="{accent}" stroke-width="2" opacity="0.5"/>',
+    ]
+
+    if not bald:
+        parts.append(
+            f'<path d="M {cx - face_w / 2 - 6} {cy - face_h / 2 + 18} '
+            f'Q {cx - face_w / 2 - 10} {cy - face_h / 2 - 40}, {cx} {cy - face_h / 2 - 34} '
+            f'Q {cx + face_w / 2 + 10} {cy - face_h / 2 - 40}, {cx + face_w / 2 + 6} {cy - face_h / 2 + 18} '
+            f'Q {cx} {cy - face_h / 2 - 6}, {cx - face_w / 2 - 6} {cy - face_h / 2 + 18} Z" fill="{hair}"/>'
+        )
+
+    if has_hood:
+        parts.append(
+            f'<path d="M {cx - face_w / 2 - 30} {cy + face_h / 2 - 10} '
+            f'Q {cx - face_w / 2 - 34} {cy - face_h / 2 - 50}, {cx} {cy - face_h / 2 - 58} '
+            f'Q {cx + face_w / 2 + 34} {cy - face_h / 2 - 50}, {cx + face_w / 2 + 30} {cy + face_h / 2 - 10} '
+            f'Q {cx} {cy - face_h / 2 + 6}, {cx - face_w / 2 - 30} {cy + face_h / 2 - 10} Z" '
+            f'fill="{bg1}" opacity="0.92"/>'
+        )
+
+    parts.append(
+        f'<ellipse cx="{cx}" cy="{cy}" rx="{face_w / 2}" ry="{face_h / 2}" fill="{skin}" stroke="{skin_shadow}" stroke-width="2"/>'
+    )
+
+    eye_y = cy - 6
+    eye_dx = face_w * 0.24
+    for sign in (-1, 1):
+        ex = cx + sign * eye_dx
+        parts.append(f'<ellipse cx="{ex}" cy="{eye_y}" rx="7" ry="5" fill="#fff" opacity="0.92"/>')
+        parts.append(f'<circle cx="{ex}" cy="{eye_y}" r="3.4" fill="{eye}"/>')
+        parts.append(
+            f'<path d="M {ex - 9} {eye_y - 9} Q {ex} {eye_y - 14}, {ex + 9} {eye_y - 9}" '
+            f'stroke="{hair if not bald else skin_shadow}" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+        )
+        if has_eyepatch and sign == 1:
+            parts.append(f'<circle cx="{ex}" cy="{eye_y}" r="9" fill="#161311"/>')
+            parts.append(
+                f'<line x1="{cx - face_w / 2}" y1="{eye_y - 12}" x2="{cx + face_w / 2}" y2="{eye_y + 4}" '
+                f'stroke="#161311" stroke-width="4"/>'
+            )
+
+    if has_glasses:
+        for sign in (-1, 1):
+            ex = cx + sign * eye_dx
+            parts.append(f'<circle cx="{ex}" cy="{eye_y}" r="12" fill="none" stroke="{accent}" stroke-width="2.4"/>')
+        parts.append(
+            f'<line x1="{cx - eye_dx + 12}" y1="{eye_y}" x2="{cx + eye_dx - 12}" y2="{eye_y}" '
+            f'stroke="{accent}" stroke-width="2.4"/>'
+        )
+
+    parts.append(
+        f'<path d="M {cx - 4} {cy + 10} L {cx + 3} {cy + 22} Q {cx} {cy + 27}, {cx - 5} {cy + 24}" '
+        f'fill="none" stroke="{skin_shadow}" stroke-width="2" stroke-linecap="round"/>'
+    )
+    parts.append(
+        f'<path d="M {cx - 16} {cy + face_h * 0.28} Q {cx} {cy + face_h * 0.34}, {cx + 16} {cy + face_h * 0.28}" '
+        f'fill="none" stroke="{skin_shadow}" stroke-width="2.6" stroke-linecap="round"/>'
+    )
+
+    if has_scar:
+        parts.append(
+            f'<line x1="{cx + face_w * 0.1}" y1="{cy - face_h * 0.32}" x2="{cx + face_w * 0.22}" y2="{cy + face_h * 0.18}" '
+            f'stroke="#8a2f2f" stroke-width="2.2" opacity="0.85"/>'
+        )
+
+    if has_beard:
+        parts.append(
+            f'<path d="M {cx - face_w / 2 + 6} {cy + face_h * 0.05} '
+            f'Q {cx} {cy + face_h * 0.62}, {cx + face_w / 2 - 6} {cy + face_h * 0.05} '
+            f'Q {cx} {cy + face_h * 0.5}, {cx - face_w / 2 + 6} {cy + face_h * 0.05} Z" '
+            f'fill="{hair}" opacity="0.92"/>'
+        )
+
+    parts.append("</svg>")
+    return "\n".join(parts)
+
+
+def build_monster_portrait_svg(description, rng):
+    bg1, bg2, accent = rng.choice(PORTRAIT_MONSTER_PALETTE)
+    if portrait_prompt_has(description, "邪恶", "阴森", "诡异"):
+        bg1, bg2, accent = PORTRAIT_MOOD_KEYWORDS[0][1]
+
+    eye_count = 1 if portrait_prompt_has(description, "独眼") else (
+        rng.randint(5, 9) if portrait_prompt_has(description, "多眼", "千眼", "复眼") else rng.randint(2, 3)
+    )
+    has_tentacles = portrait_prompt_has(description, "触手", "章鱼", "克苏鲁")
+    has_teeth = portrait_prompt_has(description, "尖牙", "獠牙", "利齿")
+    has_scales = portrait_prompt_has(description, "鳞片", "甲壳", "鱼鳞")
+
+    cx, cy = 150, 155
+    parts = [
+        '<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">',
+        "<defs>",
+        f'<radialGradient id="bg" cx="50%" cy="40%" r="80%">'
+        f'<stop offset="0%" stop-color="{bg2}"/><stop offset="100%" stop-color="{bg1}"/></radialGradient>',
+        "</defs>",
+        '<rect x="0" y="0" width="300" height="300" fill="url(#bg)"/>',
+        f'<rect x="6" y="6" width="288" height="288" fill="none" stroke="{accent}" stroke-width="2" opacity="0.5"/>',
+    ]
+
+    if has_tentacles:
+        for i in range(6):
+            angle = i / 6 * 6.283
+            tx = cx + math.cos(angle) * 95
+            ty = cy + math.sin(angle) * 95 + 20
+            mx = cx + math.cos(angle) * 55
+            my = cy + math.sin(angle) * 55 + 10
+            parts.append(
+                f'<path d="M {cx} {cy + 30} Q {mx + rng.randint(-15, 15)} {my}, {tx} {ty}" '
+                f'stroke="{accent}" stroke-width="{5 + rng.randint(0, 4)}" fill="none" '
+                f'stroke-linecap="round" opacity="0.75"/>'
+            )
+
+    blob_points = []
+    spikes = 9
+    for i in range(spikes):
+        angle = i / spikes * 6.283
+        radius = 78 + rng.randint(-16, 20)
+        blob_points.append((cx + math.cos(angle) * radius, cy + math.sin(angle) * radius * 0.92))
+    path_d = f"M {blob_points[0][0]:.1f} {blob_points[0][1]:.1f} "
+    for px, py in blob_points[1:]:
+        path_d += f"L {px:.1f} {py:.1f} "
+    path_d += "Z"
+    parts.append(f'<path d="{path_d}" fill="{accent}" opacity="0.28"/>')
+    parts.append(f'<circle cx="{cx}" cy="{cy}" r="70" fill="{bg2}" stroke="{accent}" stroke-width="2.4" opacity="0.95"/>')
+
+    if has_scales:
+        for _ in range(24):
+            sx = cx + rng.randint(-55, 55)
+            sy = cy + rng.randint(-45, 55)
+            parts.append(f'<circle cx="{sx}" cy="{sy}" r="4" fill="{accent}" opacity="0.25"/>')
+
+    for i in range(eye_count):
+        angle = rng.uniform(0, 6.283) if eye_count > 3 else (i - (eye_count - 1) / 2) * 0.55
+        radius = 10 if eye_count > 3 else 0
+        ex = cx + math.cos(angle) * (30 if eye_count > 3 else 0) + (0 if eye_count > 3 else angle * 40)
+        ex = cx + (math.cos(angle) * 32 if eye_count > 3 else angle * 40)
+        ey = cy + (math.sin(angle) * 26 if eye_count > 3 else 0)
+        r = 6 if eye_count > 4 else 10
+        parts.append(f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="{r}" fill="#0c0b0a"/>')
+        parts.append(f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="{r * 0.45:.1f}" fill="{accent}"/>')
+
+    if has_teeth:
+        for i in range(7):
+            tx = cx - 36 + i * 12
+            parts.append(f'<path d="M {tx} {cy + 34} L {tx + 5} {cy + 48} L {tx + 10} {cy + 34} Z" fill="#e8e2d0"/>')
+
+    parts.append("</svg>")
+    return "\n".join(parts)
+
+
+def build_generated_portrait_svg(description, mode):
+    description = normalize_item_description(description)
+    seed = hashlib.sha256(f"portrait:{mode}:{description}".encode("utf-8")).hexdigest()
+    rng = random.Random(seed)
+    if mode == "monster":
+        return build_monster_portrait_svg(description, rng)
+    return build_human_portrait_svg(description, rng)
+
+
+def save_generated_portrait(subdir, file_stem, description, mode):
+    target_dir = os.path.join(PORTRAITS_GEN_DIR, subdir)
+    os.makedirs(target_dir, exist_ok=True)
+    file_name = f"{file_stem}.svg"
+    file_path = os.path.join(target_dir, file_name)
+    with open(file_path, "w", encoding="utf-8") as handle:
+        handle.write(build_generated_portrait_svg(description, mode))
+    return f"portraits_gen/{subdir}/{file_name}"
+
+
+NPC_DESCRIPTION_MAX = 300
+NPC_NAME_MAX = 30
+NPC_MAX_PER_ROOM = 60
+
+NPC_ATTR_LABELS = {
+    "STR": "力量",
+    "CON": "体质",
+    "SIZ": "体型",
+    "DEX": "敏捷",
+    "APP": "外貌",
+    "INT": "智力",
+    "POW": "意志",
+    "EDU": "教育",
+    "LUK": "幸运",
+}
+
+NPC_ATTR_KEYWORDS = [
+    (("强壮", "壮硕", "健壮", "魁梧", "肌肉"), "STR", 15),
+    (("瘦弱", "虚弱", "病弱", "羸弱"), "STR", -15),
+    (("肥胖", "臃肿", "壮实"), "SIZ", 15),
+    (("矮小", "瘦小", "娇小"), "SIZ", -15),
+    (("敏捷", "灵活", "矫健", "身手"), "DEX", 15),
+    (("笨拙", "迟缓", "臃肿"), "DEX", -10),
+    (("英俊", "美丽", "漂亮", "迷人", "优雅"), "APP", 15),
+    (("丑陋", "邋遢", "猥琐", "肮脏"), "APP", -15),
+    (("聪明", "博学", "睿智", "精明", "机智"), "INT", 15),
+    (("愚笨", "头脑简单", "迟钝"), "INT", -15),
+    (("意志坚定", "冷静", "坚毅", "沉着"), "POW", 15),
+    (("胆小", "懦弱", "神经质", "怯懦"), "POW", -10),
+    (("高学历", "教授", "学者", "博士"), "EDU", 15),
+    (("辍学", "文盲", "粗鄙"), "EDU", -15),
+    (("幸运", "走运"), "LUK", 15),
+    (("倒霉", "不幸", "厄运"), "LUK", -15),
+]
+
+NPC_OCCUPATION_PROFILES = [
+    (("医生", "大夫", "外科", "医师", "护士"), "医生", {"医学": 70, "急救": 60, "心理学": 40}),
+    (("学者", "教授", "图书馆", "考古", "研究员"), "学者", {"图书馆使用": 65, "历史": 55, "神秘学": 40}),
+    (("水手", "船员", "渔夫", "航海", "船长"), "水手", {"游泳": 70, "驾驶：船艇": 60, "导航": 55}),
+    (("警察", "警探", "警官", "探员", "刑警"), "警探", {"侦查": 65, "心理学": 50, "格斗：斗殴": 55, "法律": 40}),
+    (("打手", "保镖", "黑帮", "暴徒", "打手"), "打手", {"格斗：斗殴": 70, "恐吓": 60, "闪避": 50}),
+    (("记者", "编辑", "作家"), "记者", {"话术": 60, "图书馆使用": 55, "心理学": 45}),
+    (("神职", "牧师", "修女", "教士", "僧侣"), "神职人员", {"话术": 55, "神秘学": 45, "心理学": 40}),
+    (("贵族", "富商", "商人", "富豪", "老板"), "商人", {"信用评级": 75, "话术": 55, "会计": 50}),
+    (("工人", "劳工", "矿工", "农夫", "苦力"), "劳工", {"操作重型机械": 50, "急救": 30, "电气维修": 40}),
+    (("艺术家", "画家", "音乐家", "演员"), "艺术家", {"话术": 50, "心理学": 40, "妙手": 45}),
+    (("司机", "出租车", "车夫", "货运"), "司机", {"驾驶：汽车": 65, "导航": 45}),
+    (("士兵", "军人", "退伍", "佣兵"), "军人", {"格斗：斗殴": 60, "射击：步枪": 55, "闪避": 45}),
+    (("小孩", "孩子", "儿童", "少年"), "孩童", {"闪避": 40, "潜行": 35}),
+    (("老人", "老者", "长者", "老太"), "老者", {"图书馆使用": 45, "历史": 40}),
+    (("教师", "老师", "校长"), "教师", {"话术": 55, "图书馆使用": 50, "心理学": 40}),
+]
+
+NPC_PERSONALITY_KEYWORDS = [
+    (("多疑", "警惕", "戒备"), "生性多疑，对陌生人抱有戒心，很难轻易信任别人。"),
+    (("善良", "温柔", "热心"), "心地善良，乐于助人，容易同情弱者。"),
+    (("冷酷", "无情", "狠毒"), "性格冷酷，做事不择手段，很少表露真实情感。"),
+    (("贪婪", "势利", "爱财"), "贪图钱财与利益，容易被金钱收买。"),
+    (("勇敢", "无畏", "果断"), "勇敢果决，面对危险毫不退缩。"),
+    (("胆小", "懦弱", "畏缩"), "胆小怕事，遇到麻烦第一反应是逃避。"),
+    (("固执", "顽固", "倔强"), "性格固执己见，一旦认定的事很难被说服改变。"),
+    (("幽默", "风趣", "开朗"), "性格开朗风趣，喜欢用玩笑化解紧张气氛。"),
+    (("神秘", "古怪", "诡异"), "行事神秘古怪，让人捉摸不透其真实意图。"),
+    (("忠诚", "可靠", "值得信赖"), "忠诚可靠，一旦认定的人或事便会全力守护。"),
+    (("孤僻", "冷漠", "沉默"), "性格孤僻沉默，不喜与人深交，独来独往。"),
+    (("野心", "权欲", "算计"), "野心勃勃，善于算计，一切行动都服务于自己的目标。"),
+]
+
+NPC_DEFAULT_PERSONALITIES = [
+    "看似普通，实则心思深藏，具体秉性还需在互动中细细揣摩。",
+    "喜怒不形于色，很难从表面看出真实想法。",
+    "为人处世自有一套原则，外人难以轻易读懂。",
+]
+
+NPC_BASE_SKILLS = {
+    "侦查": 25,
+    "聆听": 20,
+    "潜行": 20,
+    "说服": 10,
+    "恐吓": 15,
+    "心理学": 10,
+}
+
+
+def roll_nd6(count):
+    return sum(random.randint(1, 6) for _ in range(count))
+
+
+def roll_npc_attribute(key):
+    if key in ("SIZ", "INT", "EDU"):
+        return (roll_nd6(2) + 6) * 5
+    return roll_nd6(3) * 5
+
+
+def generate_npc_from_description(name, description, created_by):
+    description = normalize_item_description(description)[:NPC_DESCRIPTION_MAX]
+
+    values = {key: roll_npc_attribute(key) for key in NPC_ATTR_LABELS}
+    for keywords, attr_key, bonus in NPC_ATTR_KEYWORDS:
+        if item_prompt_has(description, *keywords):
+            values[attr_key] = values[attr_key] + bonus
+    for key in values:
+        values[key] = max(15, min(90, values[key]))
+
+    attributes = [
+        {"key": key, "label": NPC_ATTR_LABELS[key], "value": values[key], "half": values[key] // 2}
+        for key in ("STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU", "LUK")
+    ]
+
+    skills = dict(NPC_BASE_SKILLS)
+    skills["母语"] = values["EDU"]
+    skills["闪避"] = values["DEX"] // 2
+
+    occupation = "平民"
+    for keywords, occ_label, occ_skills in NPC_OCCUPATION_PROFILES:
+        if item_prompt_has(description, *keywords):
+            occupation = occ_label
+            for skill_name, skill_value in occ_skills.items():
+                skills[skill_name] = max(skills.get(skill_name, 0), skill_value)
+            break
+
+    skill_list = [
+        {"name": skill_name, "value": skill_value}
+        for skill_name, skill_value in sorted(skills.items(), key=lambda item: -item[1])
+    ]
+
+    traits = [
+        sentence
+        for keywords, sentence in NPC_PERSONALITY_KEYWORDS
+        if item_prompt_has(description, *keywords)
+    ]
+    if not traits:
+        traits = [random.choice(NPC_DEFAULT_PERSONALITIES)]
+    personality = " ".join(dict.fromkeys(traits))
+
+    hp = max(1, round((values["CON"] + values["SIZ"]) / 10))
+    san = min(99, values["POW"])
+    mp = max(0, round(values["POW"] / 5))
+
+    return {
+        "name": (name or "无名之人")[:NPC_NAME_MAX],
+        "description": description,
+        "occupation": occupation,
+        "attributes": attributes,
+        "skills": skill_list,
+        "personality": personality,
+        "hp": hp,
+        "hp_max": hp,
+        "san": san,
+        "san_max": san,
+        "mp": mp,
+        "created_by": created_by,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def npc_to_client(npc):
+    return {
+        "id": npc.get("id"),
+        "name": npc.get("name"),
+        "description": npc.get("description"),
+        "occupation": npc.get("occupation"),
+        "attributes": npc.get("attributes", []),
+        "skills": npc.get("skills", []),
+        "personality": npc.get("personality"),
+        "portrait": npc.get("portrait"),
+        "hp": npc.get("hp"),
+        "hp_max": npc.get("hp_max"),
+        "san": npc.get("san"),
+        "san_max": npc.get("san_max"),
+        "mp": npc.get("mp"),
+        "created_by": npc.get("created_by"),
+        "created_at": npc.get("created_at"),
+    }
+
+
 def token_to_client(token):
     return {
         "id": token.get("id"),
@@ -2046,6 +2579,20 @@ class Handler(SimpleHTTPRequestHandler):
             json_response(self, 200, {"ok": True, "monsters": monsters_to_client()})
             return
 
+        if path == "/api/room/npcs":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 404 if error == "房间不存在" else 403, {"ok": False, "error": error})
+                return
+            npcs = room.get("npcs", [])
+            json_response(self, 200, {"ok": True, "npcs": [npc_to_client(item) for item in npcs]})
+            return
+
         if path == "/api/scene":
             user = get_current_user(self)
             if not user:
@@ -2390,6 +2937,108 @@ class Handler(SimpleHTTPRequestHandler):
             json_response(self, 200, {"ok": True, "roll": roll_to_client(roll_record)})
             return
 
+        if path == "/api/room/opposed":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            with data_lock:
+                db = load_characters_db()
+                side_a, err_a = resolve_opposed_side(body.get("side_a"), db)
+                if err_a:
+                    json_response(self, 400, {"ok": False, "error": f"甲方：{err_a}"})
+                    return
+                side_b, err_b = resolve_opposed_side(body.get("side_b"), db)
+                if err_b:
+                    json_response(self, 400, {"ok": False, "error": f"乙方：{err_b}"})
+                    return
+
+                value_a = roll_die("d100")
+                value_b = roll_die("d100")
+                outcome_a = evaluate_skill_check(value_a, side_a["skill_value"])
+                outcome_b = evaluate_skill_check(value_b, side_b["skill_value"])
+
+                rank_a = OPPOSED_RANK[outcome_a["type"]]
+                rank_b = OPPOSED_RANK[outcome_b["type"]]
+                if rank_a > rank_b:
+                    winner = "a"
+                elif rank_b > rank_a:
+                    winner = "b"
+                elif side_a["skill_value"] > side_b["skill_value"]:
+                    winner = "a"
+                elif side_b["skill_value"] > side_a["skill_value"]:
+                    winner = "b"
+                else:
+                    winner = "draw"
+
+                def result_for(is_winning_side):
+                    if winner == "draw":
+                        return "draw"
+                    return "win" if is_winning_side else "lose"
+
+                timestamp = datetime.now(timezone.utc).isoformat()
+                room = rooms[room_id]
+                group_id = room.get("next_roll_id", 1)
+
+                record_a = {
+                    "dice": "d100",
+                    "label": f"对抗检定：{side_a['label']}",
+                    "value": value_a,
+                    "hidden": False,
+                    "roller": user,
+                    "timestamp": timestamp,
+                    "check_type": outcome_a["type"],
+                    "check_label": outcome_a["label"],
+                    "skill_value": outcome_a["skill_value"],
+                    "opposed_group_id": group_id,
+                    "opposed_result": result_for(winner == "a"),
+                }
+                record_b = {
+                    "dice": "d100",
+                    "label": f"对抗检定：{side_b['label']}",
+                    "value": value_b,
+                    "hidden": False,
+                    "roller": user,
+                    "timestamp": timestamp,
+                    "check_type": outcome_b["type"],
+                    "check_label": outcome_b["label"],
+                    "skill_value": outcome_b["skill_value"],
+                    "opposed_group_id": group_id,
+                    "opposed_result": result_for(winner == "b"),
+                }
+
+                roll_id_a = room.get("next_roll_id", 1)
+                record_a["id"] = roll_id_a
+                room["next_roll_id"] = roll_id_a + 1
+                roll_id_b = room["next_roll_id"]
+                record_b["id"] = roll_id_b
+                room["next_roll_id"] = roll_id_b + 1
+                room["last_roll_id"] = roll_id_b
+
+                room.setdefault("rolls", []).append(record_a)
+                room["rolls"].append(record_b)
+                if len(room["rolls"]) > 200:
+                    room["rolls"] = room["rolls"][-200:]
+                save_rooms()
+
+            json_response(
+                self,
+                200,
+                {
+                    "ok": True,
+                    "winner": winner,
+                    "side_a": roll_to_client(record_a),
+                    "side_b": roll_to_client(record_b),
+                },
+            )
+            return
+
         if path == "/api/timeline":
             user = get_current_user(self)
             if not user:
@@ -2652,6 +3301,9 @@ class Handler(SimpleHTTPRequestHandler):
                 if int(monster.get("hp", 0) or 0) <= 0:
                     json_response(self, 400, {"ok": False, "error": "怪物血量必须大于 0"})
                     return
+                portrait_desc = normalize_item_description(str(item.get("portrait_description", "")))[:PORTRAIT_DESCRIPTION_MAX]
+                if portrait_desc:
+                    monster["image"] = save_generated_portrait(room_id, monster_id, portrait_desc, "monster")
                 next_monster_id += 1
                 monsters.append(monster)
 
@@ -2737,6 +3389,9 @@ class Handler(SimpleHTTPRequestHandler):
                 if int(monster.get("hp", 0) or 0) <= 0:
                     json_response(self, 400, {"ok": False, "error": "怪物血量必须大于 0"})
                     return
+                portrait_desc = normalize_item_description(str(body.get("portrait_description", "")))[:PORTRAIT_DESCRIPTION_MAX]
+                if portrait_desc:
+                    monster["image"] = save_generated_portrait(room_id, monster["id"], portrait_desc, "monster")
                 combat["next_monster_id"] = next_id + 1
                 combat.setdefault("monsters", []).append(monster)
                 refresh_combat_state(combat)
@@ -3139,6 +3794,79 @@ class Handler(SimpleHTTPRequestHandler):
             json_response(self, 200, {"ok": True, "item": saved, **payload})
             return
 
+        if path == "/api/room/npc/generate":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 404 if error == "房间不存在" else 403, {"ok": False, "error": error})
+                return
+
+            name_raw = str(body.get("name", "")).strip()
+            description_raw = str(body.get("description", ""))
+            if len(description_raw) > NPC_DESCRIPTION_MAX:
+                json_response(self, 400, {"ok": False, "error": f"描述不能超过 {NPC_DESCRIPTION_MAX} 字"})
+                return
+            description = normalize_item_description(description_raw)
+            if not description:
+                json_response(self, 400, {"ok": False, "error": "请输入 NPC 描述"})
+                return
+            if len(name_raw) > NPC_NAME_MAX:
+                json_response(self, 400, {"ok": False, "error": f"名称不能超过 {NPC_NAME_MAX} 字"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                room.setdefault("npcs", [])
+                room.setdefault("next_npc_id", 1)
+                if len(room["npcs"]) >= NPC_MAX_PER_ROOM:
+                    json_response(self, 400, {"ok": False, "error": f"本房间 NPC 最多保留 {NPC_MAX_PER_ROOM} 个"})
+                    return
+                npc = generate_npc_from_description(name_raw, description, user)
+                npc_id = int(room["next_npc_id"])
+                npc["id"] = npc_id
+                room["next_npc_id"] = npc_id + 1
+                npc["portrait"] = save_generated_portrait(room_id, f"npc_{npc_id}", description, "human")
+                room["npcs"].append(npc)
+                save_rooms()
+                saved = npc_to_client(npc)
+
+            json_response(self, 200, {"ok": True, "npc": saved})
+            return
+
+        if path == "/api/room/npc/delete":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 404 if error == "房间不存在" else 403, {"ok": False, "error": error})
+                return
+
+            try:
+                npc_id = int(body.get("id"))
+            except (TypeError, ValueError):
+                json_response(self, 400, {"ok": False, "error": "无效 NPC ID"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                npcs = room.setdefault("npcs", [])
+                before = len(npcs)
+                room["npcs"] = [item for item in npcs if item.get("id") != npc_id]
+                if len(room["npcs"]) == before:
+                    json_response(self, 404, {"ok": False, "error": "NPC 不存在"})
+                    return
+                save_rooms()
+
+            json_response(self, 200, {"ok": True})
+            return
+
         if path == "/api/handouts/revoke":
             user = get_current_user(self)
             if not user:
@@ -3410,6 +4138,103 @@ class Handler(SimpleHTTPRequestHandler):
             json_response(self, 200, {"ok": True, "scene": None})
             return
 
+        if path == "/api/scene/fog/toggle":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            enabled = bool(body.get("enabled"))
+
+            with data_lock:
+                room = rooms[room_id]
+                scene = ensure_room_scene(room)
+                fog = ensure_scene_fog(scene)
+                fog["enabled"] = enabled
+                scene["updated_at"] = datetime.now(timezone.utc).isoformat()
+                save_rooms()
+
+            json_response(self, 200, {"ok": True, "scene": scene_to_client(room["scene"])})
+            return
+
+        if path == "/api/scene/fog/paint":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            reveal = bool(body.get("reveal"))
+            raw_cells = body.get("cells")
+            if not isinstance(raw_cells, list):
+                json_response(self, 400, {"ok": False, "error": "无效的格子列表"})
+                return
+
+            with data_lock:
+                room = rooms[room_id]
+                scene = ensure_room_scene(room)
+                fog = ensure_scene_fog(scene)
+                cols = fog.get("cols", FOG_COLS)
+                rows = fog.get("rows", FOG_ROWS)
+                revealed = list(fog.get("revealed", "0" * (cols * rows)))
+                changed = False
+                for cell in raw_cells:
+                    if not isinstance(cell, (list, tuple)) or len(cell) != 2:
+                        continue
+                    try:
+                        cx, cy = int(cell[0]), int(cell[1])
+                    except (TypeError, ValueError):
+                        continue
+                    if not (0 <= cx < cols and 0 <= cy < rows):
+                        continue
+                    index = cy * cols + cx
+                    new_val = "1" if reveal else "0"
+                    if revealed[index] != new_val:
+                        revealed[index] = new_val
+                        changed = True
+                if changed:
+                    fog["revealed"] = "".join(revealed)
+                    scene["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    save_rooms()
+
+            json_response(self, 200, {"ok": True, "scene": scene_to_client(room["scene"])})
+            return
+
+        if path == "/api/scene/fog/reset":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+            room_id = get_user_room_id(user)
+            room, error = require_room_kp(user, room_id)
+            if error:
+                json_response(self, 403 if error == "仅房间 KP 可操作" else 404, {"ok": False, "error": error})
+                return
+
+            reveal = bool(body.get("reveal"))
+
+            with data_lock:
+                room = rooms[room_id]
+                scene = ensure_room_scene(room)
+                fog = ensure_scene_fog(scene)
+                cols = fog.get("cols", FOG_COLS)
+                rows = fog.get("rows", FOG_ROWS)
+                fog["revealed"] = ("1" if reveal else "0") * (cols * rows)
+                scene["updated_at"] = datetime.now(timezone.utc).isoformat()
+                save_rooms()
+
+            json_response(self, 200, {"ok": True, "scene": scene_to_client(room["scene"])})
+            return
+
         if path == "/api/character/status":
             user = get_current_user(self)
             if not user:
@@ -3463,6 +4288,52 @@ class Handler(SimpleHTTPRequestHandler):
                     "status": pc.get("status", {}),
                 },
             )
+            return
+
+        if path == "/api/character/portrait":
+            user = get_current_user(self)
+            if not user:
+                json_response(self, 401, {"ok": False, "error": "请先登录"})
+                return
+
+            role = get_user_role(user)
+            target_pc_id = str(body.get("target", "")).strip()
+            description_raw = str(body.get("description", ""))
+            if len(description_raw) > PORTRAIT_DESCRIPTION_MAX:
+                json_response(self, 400, {"ok": False, "error": f"描述不能超过 {PORTRAIT_DESCRIPTION_MAX} 字"})
+                return
+            description = normalize_item_description(description_raw)
+            if not description:
+                json_response(self, 400, {"ok": False, "error": "请输入外貌描述"})
+                return
+
+            with data_lock:
+                db = load_characters_db()
+                if target_pc_id:
+                    if not can_view_all_characters(role):
+                        json_response(self, 403, {"ok": False, "error": "无权为该角色生成头像"})
+                        return
+                    pc, _, _ = find_pc(db, target_pc_id)
+                    if not pc:
+                        json_response(self, 404, {"ok": False, "error": "人物卡不存在"})
+                        return
+                    pc_id = target_pc_id
+                else:
+                    if role != ROLE_PLAYER:
+                        json_response(self, 400, {"ok": False, "error": "请先选择调查员人物卡"})
+                        return
+                    active_pc_id = get_session_active_pc_id(self)
+                    pc = get_active_pc_for_pl(db, user, active_pc_id)
+                    if not pc:
+                        json_response(self, 404, {"ok": False, "error": "请先选择或新建人物卡"})
+                        return
+                    pc_id = pc.get("pc_id")
+
+                pc["portrait"] = save_generated_portrait("pc", pc_id, description, "human")
+                save_characters_db(db)
+                portrait = pc["portrait"]
+
+            json_response(self, 200, {"ok": True, "target": pc_id, "portrait": portrait})
             return
 
         if path == "/api/pcs/select":
@@ -3759,6 +4630,7 @@ if __name__ == "__main__":
     os.makedirs(SCENES_DIR, exist_ok=True)
     os.makedirs(HANDOUTS_DIR, exist_ok=True)
     os.makedirs(ITEMS_DIR, exist_ok=True)
+    os.makedirs(PORTRAITS_GEN_DIR, exist_ok=True)
     init_characters_db_file()
     ensure_builtin_test_user()
     init_rooms()

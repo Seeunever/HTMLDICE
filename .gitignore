@@ -10,6 +10,8 @@ assets/scenes/*
 !assets/scenes/.gitkeep
 assets/handouts/*
 !assets/handouts/.gitkeep
+assets/portraits_gen/*
+!assets/portraits_gen/.gitkeep
 users.json
 characters.json
 rooms.json
