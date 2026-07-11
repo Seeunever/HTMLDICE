@@ -55,51 +55,61 @@
       <p id="authError" class="auth-error"></p>
     </div>
 
-    <div id="appPanel" class="hidden">
+    <div id="appPanel" class="hidden app-panel">
       <div class="user-bar">
-        <span>欢迎，<strong id="usernameDisplay"></strong><span id="roleBadge"></span></span>
-        <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
-        <button id="charBtn" type="button" class="btn-small">人物卡</button>
-        <button id="logoutBtn" type="button" class="btn-small">退出</button>
-      </div>
-      <div class="context-row">
-        <div class="map-section">
-          <label class="map-section-label" for="mapSelect">地图</label>
-          <div class="map-select-wrap">
-            <select id="mapSelect" class="map-select" aria-label="选择地图地点">
-              <option value="">选择地点…</option>
-              <option value="hotel">酒店</option>
-              <option value="dais">戴斯家</option>
-              <option value="hospital">医院</option>
-              <option value="police">警察局</option>
-              <option value="church">教堂</option>
-              <option value="bar">酒吧</option>
-            </select>
-          </div>
+        <div class="user-bar__info">
+          <span class="user-bar__label">调查员</span>
+          <span class="user-bar__name">欢迎，<strong id="usernameDisplay"></strong><span id="roleBadge"></span></span>
         </div>
-        <div class="npc-section">
-          <label class="map-section-label" for="npcSelect">NPC</label>
-          <div class="map-select-wrap">
-            <select id="npcSelect" class="map-select" aria-label="选择 NPC">
-              <option value="">选择 NPC…</option>
-              <option value="dais">戴斯</option>
-              <option value="kaling">卡灵珊</option>
-              <option value="priest">神父</option>
-            </select>
-          </div>
-        </div>
-        <div class="pc-section">
-          <label class="map-section-label" for="pcSelect">PC</label>
-          <div class="map-select-wrap">
-            <select id="pcSelect" class="map-select" aria-label="选择调查员 PC">
-              <option value="">选择 PC…</option>
-              <option value="莉莉娅">莉莉娅</option>
-              <option value="特朗狗">特朗狗</option>
-              <option value="奥八嘎">奥八嘎</option>
-            </select>
-          </div>
+        <div class="user-bar__actions">
+          <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
+          <button id="charBtn" type="button" class="btn-small">人物卡</button>
+          <button id="logoutBtn" type="button" class="btn-small">退出</button>
         </div>
       </div>
+
+      <section class="panel-block scene-panel">
+        <div class="panel-block__title">场景定位</div>
+        <div class="context-row">
+          <div class="map-section context-field context-field--wide">
+            <label class="field-label" for="mapSelect">地图</label>
+            <div class="field-select-wrap">
+              <select id="mapSelect" class="field-select" aria-label="选择地图地点">
+                <option value="">选择地点…</option>
+                <option value="hotel">酒店</option>
+                <option value="dais">戴斯家</option>
+                <option value="hospital">医院</option>
+                <option value="police">警察局</option>
+                <option value="church">教堂</option>
+                <option value="bar">酒吧</option>
+              </select>
+            </div>
+          </div>
+          <div class="npc-section context-field">
+            <label class="field-label" for="npcSelect">NPC</label>
+            <div class="field-select-wrap">
+              <select id="npcSelect" class="field-select" aria-label="选择 NPC">
+                <option value="">选择 NPC…</option>
+                <option value="dais">戴斯</option>
+                <option value="kaling">卡灵珊</option>
+                <option value="priest">神父</option>
+              </select>
+            </div>
+          </div>
+          <div class="pc-section context-field">
+            <label class="field-label" for="pcSelect">PC</label>
+            <div class="field-select-wrap">
+              <select id="pcSelect" class="field-select" aria-label="选择调查员 PC">
+                <option value="">选择 PC…</option>
+                <option value="莉莉娅">莉莉娅</option>
+                <option value="特朗狗">特朗狗</option>
+                <option value="奥八嘎">奥八嘎</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div id="investigatorBanner" class="investigator-banner hidden">
         <button type="button" id="investigatorPortraitBtn" class="investigator-banner__portrait" aria-label="查看调查员肖像">
           <img id="investigatorPortraitImg" src="" alt="">
@@ -111,21 +121,34 @@
           <div class="investigator-banner__hint">点击肖像放大 · 调查员档案</div>
         </div>
       </div>
-      <div id="results" class="results placeholder">选择骰子、技能或属性进行检定</div>
-      <div class="skill-section-label">技能检定 · D100</div>
-      <div id="skillActions" class="skill-actions">
-        <div class="skill-empty">加载技能中…</div>
-      </div>
-      <div class="skill-section-label">属性检定 · D100</div>
-      <div id="attrActions" class="attr-actions">
-        <div class="skill-empty">加载属性中…</div>
-      </div>
-      <div class="dice-section-label">自由投骰</div>
-      <div class="dice-actions">
-        <button type="button" class="dice-btn" data-dice="d100">1D100</button>
-        <button type="button" class="dice-btn" data-dice="d6">1D6</button>
-        <button type="button" class="dice-btn" data-dice="d4">1D4</button>
-      </div>
+
+      <section class="panel-block result-panel">
+        <div class="panel-block__title">检定结果</div>
+        <div id="results" class="results placeholder">选择骰子、技能或属性进行检定</div>
+      </section>
+
+      <section class="panel-block check-panel">
+        <div class="section-label">技能检定 · D100</div>
+        <div id="skillActions" class="skill-actions">
+          <div class="skill-empty">加载技能中…</div>
+        </div>
+      </section>
+
+      <section class="panel-block check-panel">
+        <div class="section-label">属性检定 · D100</div>
+        <div id="attrActions" class="attr-actions">
+          <div class="skill-empty">加载属性中…</div>
+        </div>
+      </section>
+
+      <section class="panel-block dice-panel">
+        <div class="section-label">自由投骰</div>
+        <div class="dice-actions">
+          <button type="button" class="dice-btn" data-dice="d100">1D100</button>
+          <button type="button" class="dice-btn" data-dice="d6">1D6</button>
+          <button type="button" class="dice-btn" data-dice="d4">1D4</button>
+        </div>
+      </section>
     </div>
 
     <div id="playersPanel" class="players-panel hidden">
