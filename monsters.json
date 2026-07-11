@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "monsters": [
+    {
+      "id": "deep_one",
+      "name": "深潜者",
+      "hp": 14,
+      "dex": 65,
+      "skills": [
+        { "name": "游泳", "value": 80 },
+        { "name": "格斗", "value": 60 },
+        { "name": "闪避", "value": 40 }
+      ]
+    },
+    {
+      "id": "deep_one_hybrid",
+      "name": "深潜者混种",
+      "hp": 13,
+      "dex": 60,
+      "skills": [
+        { "name": "游泳", "value": 70 },
+        { "name": "格斗", "value": 45 },
+        { "name": "闪避", "value": 35 }
+      ]
+    },
+    {
+      "id": "ghoul",
+      "name": "食尸鬼",
+      "hp": 13,
+      "dex": 50,
+      "skills": [
+        { "name": "攀爬", "value": 65 },
+        { "name": "格斗", "value": 50 },
+        { "name": "潜行", "value": 40 },
+        { "name": "图书馆使用", "value": 40 }
+      ]
+    },
+    {
+      "id": "byakhee",
+      "name": "空鬼",
+      "hp": 18,
+      "dex": 65,
+      "skills": [
+        { "name": "格斗", "value": 60 },
+        { "name": "闪避", "value": 50 },
+        { "name": "侦查", "value": 65 }
+      ]
+    },
+    {
+      "id": "hound_of_tindalos",
+      "name": "廷达洛斯猎犬",
+      "hp": 20,
+      "dex": 85,
+      "skills": [
+        { "name": "格斗", "value": 50 },
+        { "name": "聆听", "value": 65 },
+        { "name": "侦查", "value": 60 }
+      ]
+    },
+    {
+      "id": "mi_go",
+      "name": "米·戈",
+      "hp": 16,
+      "dex": 55,
+      "skills": [
+        { "name": "科学", "value": 65 },
+        { "name": "潜行", "value": 50 },
+        { "name": "格斗", "value": 40 },
+        { "name": "电气维修", "value": 55 }
+      ]
+    },
+    {
+      "id": "cultist",
+      "name": "邪教徒",
+      "hp": 11,
+      "dex": 50,
+      "skills": [
+        { "name": "说服", "value": 50 },
+        { "name": "格斗", "value": 40 },
+        { "name": "射击", "value": 30 },
+        { "name": "神秘学", "value": 45 }
+      ]
+    },
+    {
+      "id": "zombie",
+      "name": "僵尸",
+      "hp": 14,
+      "dex": 40,
+      "skills": [
+        { "name": "格斗", "value": 40 },
+        { "name": "潜行", "value": 20 }
+      ]
+    },
+    {
+      "id": "serpent_people",
+      "name": "蛇人",
+      "hp": 14,
+      "dex": 55,
+      "skills": [
+        { "name": "心理学", "value": 70 },
+        { "name": "格斗", "value": 50 },
+        { "name": "潜行", "value": 60 },
+        { "name": "神秘学", "value": 55 }
+      ]
+    },
+    {
+      "id": "star_spawn",
+      "name": "星之眷族",
+      "hp": 23,
+      "dex": 60,
+      "skills": [
+        { "name": "格斗", "value": 70 },
+        { "name": "攀爬", "value": 60 },
+        { "name": "闪避", "value": 45 }
+      ]
+    },
+    {
+      "id": "dark_young",
+      "name": "暗怖幼怪",
+      "hp": 24,
+      "dex": 40,
+      "skills": [
+        { "name": "格斗", "value": 60 },
+        { "name": "潜行", "value": 40 },
+        { "name": "闪避", "value": 30 }
+      ]
+    },
+    {
+      "id": "werewolf",
+      "name": "狼人",
+      "hp": 15,
+      "dex": 70,
+      "skills": [
+        { "name": "格斗", "value": 60 },
+        { "name": "潜行", "value": 50 },
+        { "name": "侦查", "value": 70 },
+        { "name": "聆听", "value": 60 }
+      ]
+    }
+  ]
+}

@@ -9,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="cthulhu.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23030806' stroke='%23c9a227' stroke-width='1'/%3E%3Cellipse cx='16' cy='17' rx='4' ry='5' fill='%236fcf97'/%3E%3Ccircle cx='16' cy='17' r='1.5' fill='%23030806'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="cthulhu.css?v=20260708-ui-mobile-2">
+  <link rel="icon" href="assets/apple-touch-icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180">
 </head>
 <body>
   <div class="cosmos" aria-hidden="true">
@@ -51,30 +52,116 @@
         <button type="button" class="auth-tab" data-mode="register">注册</button>
       </div>
       <input id="usernameInput" class="auth-input" type="text" maxlength="20" placeholder="请输入用户名" autocomplete="username">
+      <div id="registerRoleSection" class="auth-role-section hidden" aria-label="选择账号身份">
+        <div class="auth-role-title">创建为</div>
+        <label class="auth-role-option">
+          <input type="radio" name="registerRole" value="player" checked>
+          <span>PL 玩家</span>
+        </label>
+        <label class="auth-role-option">
+          <input type="radio" name="registerRole" value="kp">
+          <span>KP 主持人</span>
+        </label>
+      </div>
       <button id="authSubmitBtn" type="button">登录</button>
       <p id="authError" class="auth-error"></p>
     </div>
 
+    <div id="pcPanel" class="pc-panel hidden">
+      <div class="pc-panel-header">
+        <div class="pc-panel-title">选择调查员人物卡</div>
+        <div id="pcPanelSubtitle" class="pc-panel-subtitle">PL 账号下的 PC 人物卡 · 可新建或切换</div>
+      </div>
+      <div class="pc-account-bar">
+        <span>当前 PL（玩家账号）：<strong id="pcPlDisplay"></strong></span>
+      </div>
+      <div id="pcList" class="pc-list">
+        <div class="pc-empty">加载人物卡…</div>
+      </div>
+      <section class="pc-upload-section">
+        <div class="pc-upload-title">新建人物卡（PC）</div>
+        <p class="pc-upload-hint">请上传标准 CoC7 人物卡 Excel（.xlsx）</p>
+        <input id="pcFileInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="pc-file-input">
+        <button id="pcUploadBtn" type="button">上传并创建</button>
+        <ul id="pcUploadErrors" class="pc-upload-errors"></ul>
+      </section>
+      <p id="pcError" class="auth-error"></p>
+      <div class="pc-panel-footer">
+        <button id="pcLogoutBtn" type="button" class="btn-small">退出登录</button>
+      </div>
+    </div>
+
+    <div id="roomPanel" class="room-panel hidden">
+      <div class="room-panel-header">
+        <div class="room-panel-title">选择房间</div>
+        <div id="roomPanelSubtitle" class="room-panel-subtitle">加入或创建游戏房间</div>
+      </div>
+      <div id="roomCreateSection" class="room-create hidden">
+        <input id="roomNameInput" class="auth-input" type="text" maxlength="30" placeholder="输入房间名称">
+        <button id="roomCreateBtn" type="button">创建房间（KP）</button>
+      </div>
+      <div id="roomList" class="room-list">
+        <div class="room-empty">加载房间列表…</div>
+      </div>
+      <p id="roomError" class="auth-error"></p>
+      <div class="room-panel-footer">
+        <span>欢迎，<strong id="roomUsernameDisplay"></strong><span id="roomRoleBadge"></span></span>
+        <button id="roomLogoutBtn" type="button" class="btn-small">退出登录</button>
+      </div>
+    </div>
+
     <div id="appPanel" class="hidden app-panel">
       <div class="user-bar">
-        <div class="user-bar__info">
-          <span class="user-bar__label">调查员</span>
-          <span class="user-bar__name">欢迎，<strong id="usernameDisplay"></strong><span id="roleBadge"></span></span>
+        <div class="user-meta">
+          <span>欢迎，<strong id="usernameDisplay"></strong><span id="roleBadge"></span><span id="pcBadge" class="pc-badge"></span></span>
+          <span id="roomBadge" class="room-badge"></span>
         </div>
-        <div class="user-bar__actions">
+        <div class="user-actions">
+          <button id="switchPcBtn" type="button" class="btn-small hidden">切换人物卡</button>
+          <button id="leaveRoomBtn" type="button" class="btn-small">离开房间</button>
+          <button id="deleteRoomBtn" type="button" class="btn-small room-delete-btn hidden">解散房间</button>
+          <button id="combatBtn" type="button" class="btn-small btn-staff hidden">战斗</button>
+          <button id="sceneBtn" type="button" class="btn-small hidden">场景地图</button>
+          <button id="timelineBtn" type="button" class="btn-small hidden">时间线</button>
+          <button id="handoutBtn" type="button" class="btn-small handout-btn hidden">线索<span id="handoutBadge" class="handout-badge hidden"></span></button>
+          <button id="backpackBtn" type="button" class="btn-small hidden">背包</button>
+          <button id="npcBtn" type="button" class="btn-small btn-staff hidden">NPC</button>
           <button id="playersBtn" type="button" class="btn-small btn-staff hidden">玩家信息</button>
           <button id="charBtn" type="button" class="btn-small">人物卡</button>
           <button id="logoutBtn" type="button" class="btn-small">退出</button>
         </div>
       </div>
+      <div id="pcStatusBar" class="pc-status-bar hidden">
+        <div class="pc-status-chip pc-status-hp">
+          <span class="pc-status-label">HP</span>
+          <span id="homeHpValue" class="pc-status-value">—</span>
+        </div>
+        <div class="pc-status-chip pc-status-san">
+          <span class="pc-status-label">SAN</span>
+          <span id="homeSanValue" class="pc-status-value">—</span>
+        </div>
+      </div>
+      <div id="roomMembers" class="room-members"></div>
+      <div id="combatEntryRow" class="combat-entry-row hidden">
+        <button id="combatEntryBtn" type="button" class="combat-entry-btn">开启战斗</button>
+        <span id="combatEntryHint" class="combat-entry-hint">KP 可在此选择地图、参战玩家并创建怪物</span>
+      </div>
+      <div id="sceneEntryRow" class="combat-entry-row scene-entry-row hidden">
+        <button id="sceneEntryBtn" type="button" class="combat-entry-btn scene-entry-btn">场景地图</button>
+        <span id="sceneEntryHint" class="combat-entry-hint">KP 可上传背景图并放置 PC / NPC 棋子</span>
+      </div>
+      <div id="timelineEntryRow" class="combat-entry-row timeline-entry-row hidden">
+        <button id="timelineEntryBtn" type="button" class="combat-entry-btn timeline-entry-btn">时间线</button>
+        <span id="timelineEntryHint" class="combat-entry-hint">KP 可手动推进当前剧情节点</span>
+      </div>
 
       <section class="panel-block scene-panel">
         <div class="panel-block__title">场景定位</div>
         <div class="context-row">
-          <div class="map-section context-field context-field--wide">
-            <label class="field-label" for="mapSelect">地图</label>
-            <div class="field-select-wrap">
-              <select id="mapSelect" class="field-select" aria-label="选择地图地点">
+          <div class="map-section">
+            <label class="map-section-label" for="mapSelect">地图</label>
+            <div class="map-select-wrap">
+              <select id="mapSelect" class="map-select" aria-label="选择地图地点">
                 <option value="">选择地点…</option>
                 <option value="hotel">酒店</option>
                 <option value="dais">戴斯家</option>
@@ -85,10 +172,10 @@
               </select>
             </div>
           </div>
-          <div class="npc-section context-field">
-            <label class="field-label" for="npcSelect">NPC</label>
-            <div class="field-select-wrap">
-              <select id="npcSelect" class="field-select" aria-label="选择 NPC">
+          <div class="npc-section">
+            <label class="map-section-label" for="npcSelect">NPC</label>
+            <div class="map-select-wrap">
+              <select id="npcSelect" class="map-select" aria-label="选择 NPC">
                 <option value="">选择 NPC…</option>
                 <option value="dais">戴斯</option>
                 <option value="kaling">卡灵珊</option>
@@ -96,10 +183,10 @@
               </select>
             </div>
           </div>
-          <div class="pc-section context-field">
-            <label class="field-label" for="pcSelect">PC</label>
-            <div class="field-select-wrap">
-              <select id="pcSelect" class="field-select" aria-label="选择调查员 PC">
+          <div class="pc-section">
+            <label class="map-section-label" for="pcSelect">PC</label>
+            <div class="map-select-wrap">
+              <select id="pcSelect" class="map-select" aria-label="选择调查员 PC">
                 <option value="">选择 PC…</option>
                 <option value="莉莉娅">莉莉娅</option>
                 <option value="特朗狗">特朗狗</option>
@@ -119,6 +206,16 @@
           <div id="investigatorName" class="investigator-banner__name"></div>
           <div id="investigatorOcc" class="investigator-banner__occ"></div>
           <div class="investigator-banner__hint">点击肖像放大 · 调查员档案</div>
+        </div>
+      </div>
+
+      <div id="rollLog" class="roll-log">
+        <div class="roll-log-header">
+          <span class="roll-log-title">房间骰点记录</span>
+          <span id="rollLogHint" class="roll-log-hint">公开骰点所有人可见</span>
+        </div>
+        <div id="rollLogContent" class="roll-log-content">
+          <div class="roll-log-empty">暂无骰点记录</div>
         </div>
       </div>
 
@@ -143,12 +240,56 @@
 
       <section class="panel-block dice-panel">
         <div class="section-label">自由投骰</div>
+        <div id="secretRollRow" class="secret-roll-row hidden">
+          <label class="secret-roll-toggle">
+            <input id="secretRollToggle" type="checkbox">
+            <span>暗骰（玩家可见掷骰，不知结果）</span>
+          </label>
+        </div>
         <div class="dice-actions">
           <button type="button" class="dice-btn" data-dice="d100">1D100</button>
           <button type="button" class="dice-btn" data-dice="d6">1D6</button>
           <button type="button" class="dice-btn" data-dice="d4">1D4</button>
         </div>
       </section>
+
+      <div id="opposedRollSection" class="panel-block opposed-roll-section hidden">
+        <button type="button" id="opposedRollToggleBtn" class="handout-submit-btn opposed-toggle-btn">⚔ 发起对抗检定</button>
+        <div id="opposedRollForm" class="opposed-roll-form hidden">
+          <div class="handout-form-title">对抗检定</div>
+          <div class="opposed-sides">
+            <div class="opposed-side" data-side="a">
+              <div class="opposed-side-title">甲方</div>
+              <select id="opposedATypeSelect" class="handout-input opposed-type-select">
+                <option value="player">玩家</option>
+                <option value="monster">怪物/NPC</option>
+                <option value="custom">自定义</option>
+              </select>
+              <select id="opposedAPcSelect" class="handout-input"></select>
+              <select id="opposedAMonsterSelect" class="handout-input hidden"></select>
+              <select id="opposedASkillSelect" class="handout-input"></select>
+              <input id="opposedACustomLabel" type="text" class="handout-input hidden" maxlength="30" placeholder="名称（如：暗影窥视者）">
+              <input id="opposedACustomValue" type="number" class="handout-input hidden" min="0" max="999" placeholder="数值 0-999">
+            </div>
+            <div class="opposed-vs">VS</div>
+            <div class="opposed-side" data-side="b">
+              <div class="opposed-side-title">乙方</div>
+              <select id="opposedBTypeSelect" class="handout-input opposed-type-select">
+                <option value="player">玩家</option>
+                <option value="monster">怪物/NPC</option>
+                <option value="custom">自定义</option>
+              </select>
+              <select id="opposedBPcSelect" class="handout-input"></select>
+              <select id="opposedBMonsterSelect" class="handout-input hidden"></select>
+              <select id="opposedBSkillSelect" class="handout-input"></select>
+              <input id="opposedBCustomLabel" type="text" class="handout-input hidden" maxlength="30" placeholder="名称（如：值夜的守卫）">
+              <input id="opposedBCustomValue" type="number" class="handout-input hidden" min="0" max="999" placeholder="数值 0-999">
+            </div>
+          </div>
+          <button type="button" id="opposedRollSubmitBtn" class="handout-submit-btn">掷骰对抗</button>
+          <div id="opposedRollError" class="handout-form-error"></div>
+        </div>
+      </div>
     </div>
 
     <div id="playersPanel" class="players-panel hidden">
@@ -171,6 +312,160 @@
         <button id="charBackBtn" type="button" class="btn-small">返回投骰</button>
       </div>
       <div id="charContent"></div>
+    </div>
+
+    <div id="combatPanel" class="combat-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">战斗</div>
+          <div id="combatSubtitle" class="char-subtitle">管理本场遭遇战</div>
+        </div>
+        <button id="combatBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="combatContent"></div>
+    </div>
+
+    <div id="scenePanel" class="scene-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">场景地图</div>
+          <div id="sceneSubtitle" class="char-subtitle">共享场景与棋子位置</div>
+        </div>
+        <button id="sceneBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="sceneContent"></div>
+      <input id="sceneFileInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" aria-hidden="true">
+    </div>
+
+    <div id="timelinePanel" class="timeline-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">房间时间线</div>
+          <div id="timelineSubtitle" class="char-subtitle">KP 手动控制剧情推进 · PL 同步查看</div>
+        </div>
+        <button id="timelineBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="timelineCurrent" class="timeline-current">
+        <div class="timeline-empty">加载时间线…</div>
+      </div>
+      <div id="timelineKpForm" class="timeline-kp-form hidden">
+        <div id="timelineFormTitle" class="handout-form-title">添加时间线节点</div>
+        <label class="handout-field">
+          <span class="handout-field-label">标题</span>
+          <input id="timelineTitleInput" type="text" class="handout-input" maxlength="80" placeholder="例如：抵达戴斯宅邸">
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">正文（可选）</span>
+          <textarea id="timelineBodyInput" class="handout-textarea timeline-textarea" maxlength="4000" placeholder="本节点的剧情摘要、当前目标或 KP 备注…"></textarea>
+        </label>
+        <div class="timeline-form-actions">
+          <button id="timelineSubmitBtn" type="button" class="handout-submit-btn">添加节点</button>
+          <button id="timelineCancelEditBtn" type="button" class="btn-small hidden">取消编辑</button>
+        </div>
+        <div id="timelineFormError" class="handout-form-error"></div>
+      </div>
+      <div id="timelineList" class="timeline-list">
+        <div class="timeline-empty">加载中…</div>
+      </div>
+    </div>
+
+    <div id="handoutPanel" class="handout-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">线索手札</div>
+          <div id="handoutSubtitle" class="char-subtitle">KP 发放线索 · PL 查看我的线索</div>
+        </div>
+        <button id="handoutBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="handoutKpForm" class="handout-kp-form hidden">
+        <div class="handout-form-title">发放线索</div>
+        <label class="handout-field">
+          <span class="handout-field-label">标题</span>
+          <input id="handoutTitleInput" type="text" class="handout-input" maxlength="80" placeholder="例如：泛黄信件">
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">正文</span>
+          <textarea id="handoutBodyInput" class="handout-textarea" maxlength="8000" placeholder="线索描述、调查笔记…"></textarea>
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">配图（可选）</span>
+          <input id="handoutImageInput" type="file" accept="image/png,image/jpeg,image/webp">
+        </label>
+        <div class="handout-targets">
+          <div class="handout-field-label">发放对象</div>
+          <label class="handout-target-all">
+            <input id="handoutTargetAll" type="checkbox">
+            <span>全体玩家</span>
+          </label>
+          <div id="handoutTargetList" class="handout-target-list"></div>
+        </div>
+        <button id="handoutSubmitBtn" type="button" class="handout-submit-btn">发放线索</button>
+        <div id="handoutFormError" class="handout-form-error"></div>
+      </div>
+      <div id="handoutListSection" class="handout-list-section">
+        <div id="handoutListTitle" class="handout-list-title">我的线索</div>
+        <div id="handoutList" class="handout-list">
+          <div class="handout-empty">加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="backpackPanel" class="backpack-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">背包</div>
+          <div id="backpackSubtitle" class="char-subtitle">KP 生成物品 · PL 查看自己的背包</div>
+        </div>
+        <button id="backpackBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="backpackKpForm" class="backpack-kp-form hidden">
+        <div class="handout-form-title">生成物品并放入背包</div>
+        <label class="handout-field">
+          <span class="handout-field-label">放入玩家</span>
+          <select id="backpackOwnerSelect" class="handout-input"></select>
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">物品描述</span>
+          <textarea id="backpackDescInput" class="handout-textarea backpack-textarea" maxlength="600" placeholder="例如：一把锈迹斑斑的钥匙"></textarea>
+        </label>
+        <button id="backpackGenerateBtn" type="button" class="handout-submit-btn">生成物品并放入背包</button>
+        <div id="backpackFormError" class="handout-form-error"></div>
+      </div>
+      <div id="backpackListSection" class="backpack-list-section">
+        <div id="backpackListTitle" class="handout-list-title">我的背包</div>
+        <div id="backpackList" class="backpack-list">
+          <div class="handout-empty">加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="npcPanel" class="npc-panel hidden">
+      <div class="char-topbar">
+        <div>
+          <div class="char-title">NPC 生成</div>
+          <div class="char-subtitle">按文字描述生成 NPC · 含属性、技能与性格（仅 KP 可见）</div>
+        </div>
+        <button id="npcBackBtn" type="button" class="btn-small">返回投骰</button>
+      </div>
+      <div id="npcKpForm" class="handout-kp-form">
+        <div class="handout-form-title">生成 NPC</div>
+        <label class="handout-field">
+          <span class="handout-field-label">名称</span>
+          <input id="npcNameInput" type="text" class="handout-input" maxlength="30" placeholder="例如：老码头看守人">
+        </label>
+        <label class="handout-field">
+          <span class="handout-field-label">描述</span>
+          <textarea id="npcDescInput" class="handout-textarea" maxlength="300" placeholder="例如：一个强壮多疑的老水手，年轻时当过警探，如今在码头做守夜人"></textarea>
+        </label>
+        <button id="npcGenerateBtn" type="button" class="handout-submit-btn">生成 NPC</button>
+        <div id="npcFormError" class="handout-form-error"></div>
+      </div>
+      <div id="npcListSection" class="handout-list-section">
+        <div class="handout-list-title">已生成 NPC</div>
+        <div id="npcList" class="npc-list">
+          <div class="handout-empty">加载中…</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -202,11 +497,54 @@
     </div>
   </div>
 
+  <div id="roomDeleteModal" class="combat-end-modal room-delete-modal hidden" aria-hidden="true">
+    <div class="combat-end-backdrop" id="roomDeleteBackdrop"></div>
+    <div class="combat-end-card" role="dialog" aria-modal="true" aria-labelledby="roomDeleteTitle">
+      <div id="roomDeleteTitle" class="combat-end-title">解散房间</div>
+      <p class="combat-end-desc">
+        确定永久解散房间「<strong id="roomDeleteName"></strong>」？
+        场景、战斗、时间线与骰点记录将被删除，房间内玩家将被移出。
+      </p>
+      <div class="combat-end-actions">
+        <button id="roomDeleteCancelBtn" type="button" class="btn-small">取消</button>
+        <button id="roomDeleteConfirmBtn" type="button" class="btn-small room-delete-confirm-btn">确认解散</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="combatEndModal" class="combat-end-modal hidden" aria-hidden="true">
+    <div class="combat-end-backdrop" id="combatEndBackdrop"></div>
+    <div class="combat-end-card" role="dialog" aria-modal="true" aria-labelledby="combatEndTitle">
+      <div id="combatEndTitle" class="combat-end-title">结束战斗</div>
+      <p class="combat-end-desc">确定结束本场遭遇战？</p>
+      <label class="combat-end-toggle">
+        <input id="combatWritebackToggle" type="checkbox" checked>
+        <span>将当前战斗 HP 写回人物卡</span>
+      </label>
+      <div class="combat-end-actions">
+        <button id="combatEndCancelBtn" type="button" class="btn-small">取消</button>
+        <button id="combatEndConfirmBtn" type="button" class="btn-small combat-end-confirm-btn">结束战斗</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="handoutDetailModal" class="handout-detail-modal hidden" aria-hidden="true">
+    <div class="handout-detail-backdrop" id="handoutDetailBackdrop"></div>
+    <div class="handout-detail-card" role="dialog" aria-modal="true" aria-labelledby="handoutDetailTitle">
+      <button type="button" id="handoutDetailCloseBtn" class="handout-detail-close" aria-label="关闭">×</button>
+      <div id="handoutDetailTitle" class="handout-detail-title"></div>
+      <div id="handoutDetailMeta" class="handout-detail-meta"></div>
+      <div id="handoutDetailBody" class="handout-detail-body"></div>
+      <img id="handoutDetailImg" class="handout-detail-img hidden" src="" alt="">
+    </div>
+  </div>
+
   <script>
     const cardEl = document.getElementById('card');
     const authPanel = document.getElementById('authPanel');
     const appPanel = document.getElementById('appPanel');
     const usernameInput = document.getElementById('usernameInput');
+    const registerRoleSection = document.getElementById('registerRoleSection');
     const authSubmitBtn = document.getElementById('authSubmitBtn');
     const authError = document.getElementById('authError');
     const usernameDisplay = document.getElementById('usernameDisplay');
@@ -250,6 +588,145 @@
     const checkResultEl = document.getElementById('checkResult');
     const checkThresholdsEl = document.getElementById('checkThresholds');
     const checkCloseBtn = document.getElementById('checkCloseBtn');
+    const combatEndModal = document.getElementById('combatEndModal');
+    const combatEndBackdrop = document.getElementById('combatEndBackdrop');
+    const combatWritebackToggle = document.getElementById('combatWritebackToggle');
+    const combatEndCancelBtn = document.getElementById('combatEndCancelBtn');
+    const combatEndConfirmBtn = document.getElementById('combatEndConfirmBtn');
+    const roomPanel = document.getElementById('roomPanel');
+    const roomList = document.getElementById('roomList');
+    const roomCreateSection = document.getElementById('roomCreateSection');
+    const roomNameInput = document.getElementById('roomNameInput');
+    const roomCreateBtn = document.getElementById('roomCreateBtn');
+    const roomError = document.getElementById('roomError');
+    const roomPanelSubtitle = document.getElementById('roomPanelSubtitle');
+    const roomUsernameDisplay = document.getElementById('roomUsernameDisplay');
+    const roomRoleBadge = document.getElementById('roomRoleBadge');
+    const roomLogoutBtn = document.getElementById('roomLogoutBtn');
+    const leaveRoomBtn = document.getElementById('leaveRoomBtn');
+    const deleteRoomBtn = document.getElementById('deleteRoomBtn');
+    const roomDeleteModal = document.getElementById('roomDeleteModal');
+    const roomDeleteBackdrop = document.getElementById('roomDeleteBackdrop');
+    const roomDeleteName = document.getElementById('roomDeleteName');
+    const roomDeleteCancelBtn = document.getElementById('roomDeleteCancelBtn');
+    const roomDeleteConfirmBtn = document.getElementById('roomDeleteConfirmBtn');
+    const roomBadge = document.getElementById('roomBadge');
+    const roomMembers = document.getElementById('roomMembers');
+    const rollLogContent = document.getElementById('rollLogContent');
+    const rollLogHint = document.getElementById('rollLogHint');
+    const secretRollRow = document.getElementById('secretRollRow');
+    const secretRollToggle = document.getElementById('secretRollToggle');
+    const opposedRollSection = document.getElementById('opposedRollSection');
+    const opposedRollToggleBtn = document.getElementById('opposedRollToggleBtn');
+    const opposedRollForm = document.getElementById('opposedRollForm');
+    const opposedRollSubmitBtn = document.getElementById('opposedRollSubmitBtn');
+    const opposedRollError = document.getElementById('opposedRollError');
+    const opposedSideEls = {
+      a: {
+        type: document.getElementById('opposedATypeSelect'),
+        pc: document.getElementById('opposedAPcSelect'),
+        monster: document.getElementById('opposedAMonsterSelect'),
+        skill: document.getElementById('opposedASkillSelect'),
+        customLabel: document.getElementById('opposedACustomLabel'),
+        customValue: document.getElementById('opposedACustomValue'),
+      },
+      b: {
+        type: document.getElementById('opposedBTypeSelect'),
+        pc: document.getElementById('opposedBPcSelect'),
+        monster: document.getElementById('opposedBMonsterSelect'),
+        skill: document.getElementById('opposedBSkillSelect'),
+        customLabel: document.getElementById('opposedBCustomLabel'),
+        customValue: document.getElementById('opposedBCustomValue'),
+      },
+    };
+    const combatBtn = document.getElementById('combatBtn');
+    const combatPanel = document.getElementById('combatPanel');
+    const combatContent = document.getElementById('combatContent');
+    const combatSubtitle = document.getElementById('combatSubtitle');
+    const combatBackBtn = document.getElementById('combatBackBtn');
+    const combatEntryRow = document.getElementById('combatEntryRow');
+    const combatEntryBtn = document.getElementById('combatEntryBtn');
+    const combatEntryHint = document.getElementById('combatEntryHint');
+    const sceneBtn = document.getElementById('sceneBtn');
+    const scenePanel = document.getElementById('scenePanel');
+    const sceneContent = document.getElementById('sceneContent');
+    const sceneSubtitle = document.getElementById('sceneSubtitle');
+    const sceneBackBtn = document.getElementById('sceneBackBtn');
+    const sceneEntryRow = document.getElementById('sceneEntryRow');
+    const sceneEntryBtn = document.getElementById('sceneEntryBtn');
+    const sceneEntryHint = document.getElementById('sceneEntryHint');
+    const sceneFileInput = document.getElementById('sceneFileInput');
+    const timelineBtn = document.getElementById('timelineBtn');
+    const timelinePanel = document.getElementById('timelinePanel');
+    const timelineSubtitle = document.getElementById('timelineSubtitle');
+    const timelineBackBtn = document.getElementById('timelineBackBtn');
+    const timelineCurrent = document.getElementById('timelineCurrent');
+    const timelineKpForm = document.getElementById('timelineKpForm');
+    const timelineFormTitle = document.getElementById('timelineFormTitle');
+    const timelineTitleInput = document.getElementById('timelineTitleInput');
+    const timelineBodyInput = document.getElementById('timelineBodyInput');
+    const timelineSubmitBtn = document.getElementById('timelineSubmitBtn');
+    const timelineCancelEditBtn = document.getElementById('timelineCancelEditBtn');
+    const timelineFormError = document.getElementById('timelineFormError');
+    const timelineList = document.getElementById('timelineList');
+    const timelineEntryRow = document.getElementById('timelineEntryRow');
+    const timelineEntryBtn = document.getElementById('timelineEntryBtn');
+    const timelineEntryHint = document.getElementById('timelineEntryHint');
+    const handoutBtn = document.getElementById('handoutBtn');
+    const handoutBadge = document.getElementById('handoutBadge');
+    const handoutPanel = document.getElementById('handoutPanel');
+    const handoutSubtitle = document.getElementById('handoutSubtitle');
+    const handoutBackBtn = document.getElementById('handoutBackBtn');
+    const handoutKpForm = document.getElementById('handoutKpForm');
+    const handoutTitleInput = document.getElementById('handoutTitleInput');
+    const handoutBodyInput = document.getElementById('handoutBodyInput');
+    const handoutImageInput = document.getElementById('handoutImageInput');
+    const handoutTargetAll = document.getElementById('handoutTargetAll');
+    const handoutTargetList = document.getElementById('handoutTargetList');
+    const handoutSubmitBtn = document.getElementById('handoutSubmitBtn');
+    const handoutFormError = document.getElementById('handoutFormError');
+    const handoutListTitle = document.getElementById('handoutListTitle');
+    const handoutList = document.getElementById('handoutList');
+    const npcBtn = document.getElementById('npcBtn');
+    const npcPanel = document.getElementById('npcPanel');
+    const npcBackBtn = document.getElementById('npcBackBtn');
+    const npcNameInput = document.getElementById('npcNameInput');
+    const npcDescInput = document.getElementById('npcDescInput');
+    const npcGenerateBtn = document.getElementById('npcGenerateBtn');
+    const npcFormError = document.getElementById('npcFormError');
+    const npcList = document.getElementById('npcList');
+    const handoutDetailModal = document.getElementById('handoutDetailModal');
+    const handoutDetailBackdrop = document.getElementById('handoutDetailBackdrop');
+    const handoutDetailCloseBtn = document.getElementById('handoutDetailCloseBtn');
+    const handoutDetailTitle = document.getElementById('handoutDetailTitle');
+    const handoutDetailMeta = document.getElementById('handoutDetailMeta');
+    const handoutDetailBody = document.getElementById('handoutDetailBody');
+    const handoutDetailImg = document.getElementById('handoutDetailImg');
+    const backpackBtn = document.getElementById('backpackBtn');
+    const backpackPanel = document.getElementById('backpackPanel');
+    const backpackSubtitle = document.getElementById('backpackSubtitle');
+    const backpackBackBtn = document.getElementById('backpackBackBtn');
+    const backpackKpForm = document.getElementById('backpackKpForm');
+    const backpackOwnerSelect = document.getElementById('backpackOwnerSelect');
+    const backpackDescInput = document.getElementById('backpackDescInput');
+    const backpackGenerateBtn = document.getElementById('backpackGenerateBtn');
+    const backpackFormError = document.getElementById('backpackFormError');
+    const backpackListTitle = document.getElementById('backpackListTitle');
+    const backpackList = document.getElementById('backpackList');
+    const pcPanel = document.getElementById('pcPanel');
+    const pcList = document.getElementById('pcList');
+    const pcPlDisplay = document.getElementById('pcPlDisplay');
+    const pcPanelSubtitle = document.getElementById('pcPanelSubtitle');
+    const pcFileInput = document.getElementById('pcFileInput');
+    const pcUploadBtn = document.getElementById('pcUploadBtn');
+    const pcUploadErrors = document.getElementById('pcUploadErrors');
+    const pcError = document.getElementById('pcError');
+    const pcLogoutBtn = document.getElementById('pcLogoutBtn');
+    const switchPcBtn = document.getElementById('switchPcBtn');
+    const pcBadge = document.getElementById('pcBadge');
+    const pcStatusBar = document.getElementById('pcStatusBar');
+    const homeHpValue = document.getElementById('homeHpValue');
+    const homeSanValue = document.getElementById('homeSanValue');
     let authMode = 'login';
     let currentCharacter = null;
     let skillCheckBusy = false;
@@ -257,6 +734,44 @@
     let canEditStatus = false;
     let charViewSource = 'dice';
     let viewingTarget = null;
+    let viewingPcId = null;
+    let activePcId = null;
+    let activePcSummary = null;
+    let currentRoom = null;
+    let currentUsername = null;
+    let canSecretRoll = false;
+    let pendingDeleteRoomId = null;
+    let lastRollId = 0;
+    let rollPollTimer = null;
+    let combatPollTimer = null;
+    let combatState = null;
+    let combatCanManage = false;
+    let combatCanView = false;
+    let combatRoomPlayers = [];
+    let monsterTemplates = [];
+    let scenePollTimer = null;
+    let sceneState = null;
+    let sceneCanManage = false;
+    let sceneDragState = null;
+    let sceneFogPaintState = null;
+    let sceneFogMode = 'reveal';
+    let timelinePollTimer = null;
+    let timelineState = null;
+    let timelineCanManage = false;
+    let timelineEditingId = null;
+    let handoutPollTimer = null;
+    let handoutsCache = [];
+    let backpacksCache = [];
+    let lastHandoutId = 0;
+    let pendingHandoutImageFile = null;
+    const ROLL_POLL_MS = 2000;
+    const PORTRAIT_DESCRIPTION_MAX = 200;
+    const COMBAT_POLL_MS = 2000;
+    const SCENE_POLL_MS = 2000;
+    const FOG_COLS = 20;
+    const FOG_ROWS = 14;
+    const TIMELINE_POLL_MS = 2000;
+    const HANDOUT_POLL_MS = 2000;
 
     const CHECK_RESULTS = {
       crit_success: { label: '大成功', class: 'crit-success' },
@@ -272,7 +787,7 @@
         sides: 100,
         label: '1D100',
         critSuccess: (n) => n <= 5,
-        critFail: (n) => n >= 95,
+        critFail: (n) => n >= 96,
       },
       d6: {
         sides: 6,
@@ -336,20 +851,1219 @@
       authTabs.forEach((tab) => {
         tab.classList.toggle('active', tab.dataset.mode === mode);
       });
+      registerRoleSection.classList.toggle('hidden', mode !== 'register');
       authSubmitBtn.textContent = mode === 'login' ? '登录' : '注册';
       authError.textContent = '';
     }
 
     function showAuth() {
+      stopRollPolling();
+      stopCombatPolling();
+      stopScenePolling();
+      stopTimelinePolling();
+      stopHandoutPolling();
       authPanel.classList.remove('hidden');
+      roomPanel.classList.add('hidden');
       appPanel.classList.add('hidden');
       charPanel.classList.add('hidden');
       playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      pcPanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       authError.textContent = '';
       usernameInput.value = '';
       currentUserRole = 'player';
       canEditStatus = false;
+      currentRoom = null;
+      canSecretRoll = false;
+      lastRollId = 0;
+      combatState = null;
+      combatCanManage = false;
+      combatCanView = false;
+      sceneState = null;
+      sceneCanManage = false;
+      timelineState = null;
+      timelineCanManage = false;
+      timelineEditingId = null;
+      handoutsCache = [];
+      lastHandoutId = 0;
+      pendingHandoutImageFile = null;
+      updateHandoutBadge();
+      activePcId = null;
+      activePcSummary = null;
+    }
+
+    function updatePcBadge() {
+      const isPlayer = currentUserRole === 'player';
+      switchPcBtn.classList.toggle('hidden', !isPlayer);
+      if (isPlayer && activePcSummary?.name) {
+        pcBadge.textContent = ` · PC：${activePcSummary.name}`;
+      } else {
+        pcBadge.textContent = '';
+      }
+      updateHomeStatus();
+    }
+
+    function updateHomeStatus() {
+      const isPlayer = currentUserRole === 'player';
+      if (!isPlayer || (!activePcSummary && !currentCharacter)) {
+        pcStatusBar.classList.add('hidden');
+        return;
+      }
+      pcStatusBar.classList.remove('hidden');
+      const status = currentCharacter?.status || {};
+      const hp = status.hp ?? activePcSummary?.hp;
+      const hpMax = status.hp_max ?? activePcSummary?.hp_max ?? hp;
+      const san = status.san ?? activePcSummary?.san;
+      const sanMax = status.san_max ?? activePcSummary?.san_max ?? 99;
+      homeHpValue.textContent = formatStatCurrentMax(hp, hpMax);
+      homeSanValue.textContent = formatStatCurrentMax(san, sanMax);
+    }
+
+    function showPcSelectPanel(username, fromApp = false) {
+      stopRollPolling();
+      stopCombatPolling();
+      stopScenePolling();
+      stopTimelinePolling();
+      stopHandoutPolling();
+      authPanel.classList.add('hidden');
+      pcPanel.classList.remove('hidden');
+      roomPanel.classList.add('hidden');
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      cardEl.classList.remove('sheet-mode');
+      pcPlDisplay.textContent = username || usernameDisplay.textContent;
+      pcPanelSubtitle.textContent = fromApp
+        ? '切换当前 PL 账号下的人物卡（PC）'
+        : '登录后请选择已有 PC，或上传 Excel 新建人物卡';
+      pcError.textContent = '';
+      pcUploadErrors.replaceChildren();
+      loadPcList();
+    }
+
+    async function loadPcList() {
+      pcList.innerHTML = '<div class="pc-empty">加载人物卡…</div>';
+      const { data } = await api('/api/pcs');
+      if (!data.ok) {
+        pcList.innerHTML = `<div class="pc-empty">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+      activePcId = data.active_pc_id || activePcId;
+      if (!data.pcs.length) {
+        pcList.innerHTML = '<div class="pc-empty">暂无人物卡，请上传 Excel 新建</div>';
+        return;
+      }
+      pcList.replaceChildren();
+      data.pcs.forEach((pc) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `pc-card${pc.is_active ? ' active' : ''}`;
+        card.innerHTML = `
+          <div class="pc-card-name">${escapeHtml(pc.name)}</div>
+          <div class="pc-card-meta">PC · ${escapeHtml(pc.occupation || '未知职业')}</div>
+          <div class="pc-card-stats">HP ${escapeHtml(formatStatCurrentMax(pc.hp, pc.hp_max ?? pc.hp))} · SAN ${escapeHtml(formatStatCurrentMax(pc.san, pc.san_max ?? 99))}</div>
+          ${pc.is_active ? '<div class="pc-card-active-tag">当前使用</div>' : ''}
+        `;
+        card.addEventListener('click', () => selectPc(pc.pc_id));
+        pcList.appendChild(card);
+      });
+    }
+
+    async function selectPc(pcId) {
+      pcError.textContent = '';
+      const { data } = await api('/api/pcs/select', {
+        method: 'POST',
+        body: JSON.stringify({ pc_id: pcId }),
+      });
+      if (!data.ok) {
+        pcError.textContent = data.error || '选择失败';
+        return;
+      }
+      activePcId = data.active_pc_id;
+      activePcSummary = data.active_pc;
+      updatePcBadge();
+      continueAfterPcSelected(usernameDisplay.textContent || pcPlDisplay.textContent, currentUserRole);
+    }
+
+    async function uploadPcFile() {
+      const file = pcFileInput.files?.[0];
+      pcError.textContent = '';
+      pcUploadErrors.replaceChildren();
+      if (!file) {
+        pcError.textContent = '请选择 Excel 人物卡文件';
+        return;
+      }
+      if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        pcError.textContent = '请上传 .xlsx 格式的 Excel 人物卡';
+        return;
+      }
+      pcUploadBtn.disabled = true;
+      try {
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result || '';
+            const comma = String(result).indexOf(',');
+            resolve(comma >= 0 ? String(result).slice(comma + 1) : String(result));
+          };
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        const { data } = await api('/api/pcs/upload', {
+          method: 'POST',
+          body: JSON.stringify({ file: base64, filename: file.name }),
+        });
+        if (!data.ok) {
+          pcError.textContent = data.error || '上传失败';
+          (data.errors || []).forEach((msg) => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            pcUploadErrors.appendChild(li);
+          });
+          return;
+        }
+        activePcId = data.pc_id;
+        activePcSummary = data.active_pc;
+        pcFileInput.value = '';
+        updatePcBadge();
+        continueAfterPcSelected(usernameDisplay.textContent || pcPlDisplay.textContent, currentUserRole);
+      } catch {
+        pcError.textContent = '读取文件失败';
+      } finally {
+        pcUploadBtn.disabled = false;
+      }
+    }
+
+    async function continueAfterPcSelected(username, role) {
+      pcPanel.classList.add('hidden');
+      const { data } = await api('/api/me');
+      if (!data.logged_in) {
+        showAuth();
+        return;
+      }
+      activePcId = data.active_pc_id;
+      activePcSummary = data.active_pc;
+      updatePcBadge();
+      if (data.room) {
+        enterRoom(data.room, username, role);
+      } else {
+        showRoomLobby(username, role);
+      }
+    }
+
+    function showRoomLobby(username, role) {
+      stopRollPolling();
+      stopCombatPolling();
+      stopScenePolling();
+      stopTimelinePolling();
+      stopHandoutPolling();
+      authPanel.classList.add('hidden');
+      pcPanel.classList.add('hidden');
+      roomPanel.classList.remove('hidden');
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      cardEl.classList.remove('sheet-mode');
+      roomUsernameDisplay.textContent = username;
+      updateRoomLobbyRole(role);
+      roomError.textContent = '';
+      loadRoomList(role);
+    }
+
+    function updateRoomLobbyRole(role) {
+      const roleLabels = { admin: '管理员', kp: 'KP', player: '' };
+      const label = roleLabels[role] || '';
+      roomRoleBadge.textContent = label ? ` · ${label}` : '';
+      const isKp = role === 'kp' || role === 'admin';
+      roomCreateSection.classList.toggle('hidden', !isKp);
+      roomPanelSubtitle.textContent = isKp
+        ? '创建房间、回到已有房间，或解散不再使用的房间'
+        : '选择一个房间加入游戏';
+    }
+
+    async function loadRoomList(role) {
+      roomList.innerHTML = '<div class="room-empty">加载房间列表…</div>';
+      const { data } = await api('/api/rooms');
+      if (!data.ok) {
+        roomList.innerHTML = `<div class="room-empty">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+
+      if (!data.rooms.length) {
+        const hint = data.can_create
+          ? '暂无房间，请在上方创建'
+          : '暂无房间，请等待 KP 创建';
+        roomList.innerHTML = `<div class="room-empty">${hint}</div>`;
+        return;
+      }
+
+      roomList.replaceChildren();
+      const lobbyUsername = roomUsernameDisplay.textContent;
+      const isKpRole = role === 'kp' || role === 'admin';
+      data.rooms.forEach((room) => {
+        const card = document.createElement('div');
+        const isMyRoom = isKpRole && room.kp === lobbyUsername;
+        card.className = `room-card${isMyRoom ? ' room-card--mine' : ''}`;
+        const kpName = room.kp || '—';
+        const players = (room.players || []).join('、') || '暂无';
+        card.innerHTML = `
+          <div class="room-card-name">${escapeHtml(room.name)}${isMyRoom ? ' <span class="room-card-tag">我的房间</span>' : ''}</div>
+          <div class="room-card-meta">KP：${escapeHtml(kpName)} · 玩家 ${room.player_count} 人</div>
+          <div class="room-card-players">PL：${escapeHtml(players)}</div>
+          <div class="room-card-actions"></div>
+        `;
+        const actions = card.querySelector('.room-card-actions');
+
+        if (role === 'player') {
+          const joinBtn = document.createElement('button');
+          joinBtn.type = 'button';
+          joinBtn.className = 'room-join-btn';
+          joinBtn.textContent = data.current_room_id === room.id ? '已在房间' : '加入房间';
+          joinBtn.disabled = !!data.current_room_id;
+          joinBtn.addEventListener('click', () => joinRoom(room.id));
+          actions.appendChild(joinBtn);
+        }
+
+        if (isMyRoom) {
+          if (data.current_room_id !== room.id) {
+            const rejoinBtn = document.createElement('button');
+            rejoinBtn.type = 'button';
+            rejoinBtn.className = 'room-rejoin-btn';
+            rejoinBtn.textContent = '回到房间';
+            rejoinBtn.addEventListener('click', () => rejoinRoom(room.id));
+            actions.appendChild(rejoinBtn);
+          }
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.className = 'room-delete-card-btn';
+          deleteBtn.textContent = '解散房间';
+          deleteBtn.addEventListener('click', () => showDeleteRoomModal(room.id, room.name));
+          actions.appendChild(deleteBtn);
+        }
+
+        roomList.appendChild(card);
+      });
+    }
+
+    async function createRoom() {
+      const name = roomNameInput.value.trim();
+      if (!name) {
+        roomError.textContent = '请输入房间名称';
+        return;
+      }
+      roomCreateBtn.disabled = true;
+      roomError.textContent = '';
+      const { data } = await api('/api/rooms', {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+      });
+      roomCreateBtn.disabled = false;
+      if (!data.ok) {
+        roomError.textContent = data.error || '创建失败';
+        return;
+      }
+      enterRoom(data.room, roomUsernameDisplay.textContent, currentUserRole);
+    }
+
+    async function joinRoom(roomId) {
+      roomError.textContent = '';
+      const { data } = await api('/api/room/join', {
+        method: 'POST',
+        body: JSON.stringify({ room_id: roomId }),
+      });
+      if (!data.ok) {
+        roomError.textContent = data.error || '加入失败';
+        return;
+      }
+      enterRoom(data.room, roomUsernameDisplay.textContent, currentUserRole);
+    }
+
+    async function leaveRoom() {
+      const { data } = await api('/api/room/leave', { method: 'POST', body: '{}' });
+      if (!data.ok) {
+        alert(data.error || '离开失败');
+        return;
+      }
+      stopRollPolling();
+      stopCombatPolling();
+      stopScenePolling();
+      stopTimelinePolling();
+      stopHandoutPolling();
+      handoutsCache = [];
+      lastHandoutId = 0;
+      updateHandoutBadge();
+      currentRoom = null;
+      combatState = null;
+      sceneState = null;
+      sceneCanManage = false;
+      timelineState = null;
+      timelineCanManage = false;
+      timelineEditingId = null;
+      showRoomLobby(usernameDisplay.textContent, currentUserRole);
+    }
+
+    function enterRoom(room, username, role) {
+      currentRoom = room;
+      roomPanel.classList.add('hidden');
+      showApp(username, role);
+      refreshRoomUI();
+      loadInitialRolls();
+      startRollPolling();
+      loadInitialHandouts();
+      startHandoutPolling();
+      refreshCombatAccess();
+      refreshSceneAccess();
+      refreshTimelineState();
+      startTimelinePolling();
+    }
+
+    async function refreshRoomUI() {
+      const { data } = await api('/api/room');
+      if (!data.ok || !data.in_room) return;
+      currentRoom = data.room;
+      canSecretRoll = !!data.can_secret_roll;
+      lastRollId = data.last_roll_id || lastRollId;
+      lastHandoutId = data.last_handout_id ?? lastHandoutId;
+      roomBadge.textContent = ` · ${currentRoom.name}`;
+      handoutBtn.classList.toggle('hidden', !currentRoom);
+      secretRollRow.classList.toggle('hidden', !canSecretRoll);
+      opposedRollSection.classList.toggle('hidden', !canSecretRoll);
+      if (!canSecretRoll) {
+        opposedRollForm.classList.add('hidden');
+      }
+      npcBtn.classList.toggle('hidden', !canSecretRoll);
+      rollLogHint.textContent = canSecretRoll
+        ? '公开骰点所有人可见 · 暗骰对玩家隐藏结果'
+        : '公开骰点所有人可见 · KP 暗骰时结果不可见';
+
+      const kp = currentRoom.kp || '—';
+      const players = (currentRoom.players || []).join('、') || '暂无';
+      roomMembers.innerHTML = `
+        <span class="room-member room-member--kp">KP：${escapeHtml(kp)}</span>
+        <span class="room-member room-member--pl">PL：${escapeHtml(players)}</span>
+      `;
+      updateCombatEntry();
+      updateSceneEntry();
+      updateTimelineEntry();
+      updateRoomToolbar();
+    }
+
+    function updateRoomToolbar() {
+      const isKp = !!canSecretRoll;
+      leaveRoomBtn.textContent = isKp ? '暂离房间' : '离开房间';
+      deleteRoomBtn.classList.toggle('hidden', !isKp);
+    }
+
+    function showDeleteRoomModal(roomId, roomName) {
+      pendingDeleteRoomId = roomId;
+      roomDeleteName.textContent = roomName || roomId;
+      roomDeleteModal.classList.remove('hidden');
+      roomDeleteModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideDeleteRoomModal() {
+      roomDeleteModal.classList.add('hidden');
+      roomDeleteModal.setAttribute('aria-hidden', 'true');
+      pendingDeleteRoomId = null;
+    }
+
+    async function confirmDeleteRoom() {
+      const roomId = pendingDeleteRoomId;
+      if (!roomId) return;
+      hideDeleteRoomModal();
+      const { data } = await api('/api/room/delete', {
+        method: 'POST',
+        body: JSON.stringify({ room_id: roomId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '解散失败');
+        return;
+      }
+      const wasInDeletedRoom = currentRoom?.id === roomId;
+      stopRollPolling();
+      stopCombatPolling();
+      stopScenePolling();
+      stopTimelinePolling();
+      stopHandoutPolling();
+      handoutsCache = [];
+      lastHandoutId = 0;
+      updateHandoutBadge();
+      currentRoom = null;
+      combatState = null;
+      sceneState = null;
+      sceneCanManage = false;
+      timelineState = null;
+      timelineCanManage = false;
+      timelineEditingId = null;
+      const username = usernameDisplay.textContent || roomUsernameDisplay.textContent;
+      showRoomLobby(username, currentUserRole);
+      if (wasInDeletedRoom) {
+        alert('房间已解散');
+      }
+    }
+
+    async function rejoinRoom(roomId) {
+      const { data } = await api('/api/room/rejoin', {
+        method: 'POST',
+        body: JSON.stringify({ room_id: roomId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '回到房间失败');
+        return;
+      }
+      const username = roomUsernameDisplay.textContent || usernameDisplay.textContent;
+      enterRoom(data.room, username, currentUserRole);
+    }
+
+    function updateCombatEntry() {
+      const isStaff = currentUserRole === 'admin' || currentUserRole === 'kp';
+      const inCombat = !!combatState?.active;
+      const showKpEntry = isStaff && canSecretRoll && currentRoom;
+      const showPlayerEntry = inCombat && combatCanView && !isStaff;
+
+      if (showKpEntry || showPlayerEntry) {
+        combatEntryRow.classList.remove('hidden');
+        if (showKpEntry) {
+          combatEntryBtn.textContent = inCombat ? '进入战斗面板' : '开启战斗';
+          combatEntryHint.textContent = inCombat
+            ? `战斗进行中 · ${combatState.map_label || '未知地图'}`
+            : '选择地图、参战玩家并创建怪物后开始遭遇战';
+        } else {
+          combatEntryBtn.textContent = '查看战斗';
+          combatEntryHint.textContent = `战斗进行中 · ${combatState?.map_label || '未知地图'}`;
+        }
+      } else {
+        combatEntryRow.classList.add('hidden');
+      }
+    }
+
+    function stopRollPolling() {
+      if (rollPollTimer) {
+        clearInterval(rollPollTimer);
+        rollPollTimer = null;
+      }
+    }
+
+    function startRollPolling() {
+      stopRollPolling();
+      rollPollTimer = setInterval(pollRoomRolls, ROLL_POLL_MS);
+    }
+
+    async function loadInitialRolls() {
+      rollLogContent.innerHTML = '<div class="roll-log-empty">加载记录…</div>';
+      lastRollId = 0;
+      const { data } = await api('/api/room/rolls?since=0');
+      if (!data.ok) return;
+      rollLogContent.replaceChildren();
+      if (!data.rolls.length) {
+        rollLogContent.innerHTML = '<div class="roll-log-empty">暂无骰点记录</div>';
+      } else {
+        data.rolls.forEach((roll) => appendRollToLog(roll, false));
+      }
+      lastRollId = data.last_roll_id || lastRollId;
+    }
+
+    async function pollRoomRolls() {
+      if (!currentRoom) return;
+      const { data } = await api(`/api/room/rolls?since=${lastRollId}`);
+      if (!data.ok) return;
+      if (data.rolls.length) {
+        const empty = rollLogContent.querySelector('.roll-log-empty');
+        if (empty) empty.remove();
+        data.rolls.forEach((roll) => appendRollToLog(roll, true));
+      }
+      lastRollId = data.last_roll_id || lastRollId;
+    }
+
+    function stopHandoutPolling() {
+      if (handoutPollTimer) {
+        clearInterval(handoutPollTimer);
+        handoutPollTimer = null;
+      }
+    }
+
+    function startHandoutPolling() {
+      stopHandoutPolling();
+      if (!currentRoom) return;
+      handoutPollTimer = setInterval(pollHandouts, HANDOUT_POLL_MS);
+    }
+
+    function mergeHandouts(incoming, replace = false) {
+      if (replace) {
+        handoutsCache = incoming.slice();
+      } else if (incoming.length) {
+        const byId = new Map(handoutsCache.map((item) => [item.id, item]));
+        incoming.forEach((item) => byId.set(item.id, item));
+        handoutsCache = Array.from(byId.values());
+      }
+      handoutsCache.sort((a, b) => b.id - a.id);
+      if (!canSecretRoll) {
+        handoutsCache = handoutsCache.filter((item) => !item.revoked);
+      }
+      updateHandoutBadge();
+      if (!handoutPanel.classList.contains('hidden')) {
+        renderHandoutList();
+      }
+    }
+
+    function getUnreadHandoutCount() {
+      if (canSecretRoll) return 0;
+      return handoutsCache.filter((item) => !item.revoked && !item.read).length;
+    }
+
+    function updateHandoutBadge() {
+      const count = getUnreadHandoutCount();
+      if (!currentRoom || count <= 0) {
+        handoutBadge.classList.add('hidden');
+        handoutBadge.textContent = '';
+        return;
+      }
+      handoutBadge.classList.remove('hidden');
+      handoutBadge.textContent = count > 9 ? '9+' : String(count);
+    }
+
+    async function loadInitialHandouts() {
+      if (!currentRoom) return;
+      const { data } = await api('/api/handouts?since=0');
+      if (!data.ok) return;
+      mergeHandouts(data.handouts || [], true);
+      lastHandoutId = data.last_handout_id || lastHandoutId;
+    }
+
+    async function pollHandouts() {
+      if (!currentRoom) return;
+      if (!handoutPanel.classList.contains('hidden')) {
+        const { data } = await api('/api/handouts?since=0');
+        if (!data.ok) return;
+        mergeHandouts(data.handouts || [], true);
+        lastHandoutId = data.last_handout_id || lastHandoutId;
+        return;
+      }
+      const { data } = await api(`/api/handouts?since=${lastHandoutId}`);
+      if (!data.ok) return;
+      if (data.handouts?.length) {
+        mergeHandouts(data.handouts, false);
+      }
+      lastHandoutId = data.last_handout_id || lastHandoutId;
+    }
+
+    function stopTimelinePolling() {
+      if (timelinePollTimer) {
+        clearInterval(timelinePollTimer);
+        timelinePollTimer = null;
+      }
+    }
+
+    function startTimelinePolling() {
+      stopTimelinePolling();
+      if (!currentRoom) return;
+      timelinePollTimer = setInterval(refreshTimelineState, TIMELINE_POLL_MS);
+    }
+
+    function getTimelineEntries() {
+      return timelineState?.entries || [];
+    }
+
+    function getCurrentTimelineEntry() {
+      const currentId = timelineState?.current_entry_id;
+      if (currentId == null) return null;
+      return getTimelineEntries().find((entry) => entry.id === currentId) || null;
+    }
+
+    function updateTimelineButton() {
+      timelineBtn.classList.toggle('hidden', !currentRoom);
+    }
+
+    function updateTimelineEntry() {
+      updateTimelineButton();
+      const entries = getTimelineEntries();
+      const current = getCurrentTimelineEntry();
+      const isKp = !!timelineCanManage || !!canSecretRoll;
+      const showEntry = !!currentRoom && (isKp || entries.length > 0);
+
+      if (!showEntry) {
+        timelineEntryRow.classList.add('hidden');
+        return;
+      }
+
+      timelineEntryRow.classList.remove('hidden');
+      if (current) {
+        timelineEntryBtn.textContent = isKp ? '推进时间线' : '查看时间线';
+        timelineEntryHint.textContent = `当前：${current.title}`;
+      } else if (isKp) {
+        timelineEntryBtn.textContent = '创建时间线';
+        timelineEntryHint.textContent = '添加剧情节点，并由 KP 手动设为当前';
+      } else {
+        timelineEntryBtn.textContent = '查看时间线';
+        timelineEntryHint.textContent = 'KP 尚未指定当前节点';
+      }
+    }
+
+    async function refreshTimelineState(forceRender = false) {
+      if (!currentRoom) {
+        timelineState = null;
+        timelineCanManage = false;
+        updateTimelineEntry();
+        stopTimelinePolling();
+        return;
+      }
+      const previousUpdated = timelineState?.updated_at;
+      const { data } = await api('/api/timeline');
+      if (!data.ok) return;
+      timelineCanManage = !!data.can_manage;
+      timelineState = data.timeline || { entries: [], current_entry_id: null, updated_at: null };
+      updateTimelineEntry();
+      if (!timelinePanel.classList.contains('hidden')) {
+        const changed = previousUpdated !== timelineState?.updated_at;
+        if (forceRender || changed || !timelineList.childElementCount) {
+          renderTimelinePanel(data);
+        }
+      }
+    }
+
+    async function showTimelineView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      timelinePanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+      timelineCurrent.innerHTML = '<div class="timeline-empty">加载时间线…</div>';
+      timelineList.innerHTML = '<div class="timeline-empty">加载中…</div>';
+      await refreshTimelineState(true);
+    }
+
+    function resetTimelineForm() {
+      timelineEditingId = null;
+      timelineTitleInput.value = '';
+      timelineBodyInput.value = '';
+      timelineFormError.textContent = '';
+      timelineFormTitle.textContent = '添加时间线节点';
+      timelineSubmitBtn.textContent = '添加节点';
+      timelineCancelEditBtn.classList.add('hidden');
+    }
+
+    function renderTimelineCurrent() {
+      const current = getCurrentTimelineEntry();
+      if (!current) {
+        timelineCurrent.innerHTML = `
+          <div class="timeline-current-card empty">
+            <div class="timeline-current-label">当前节点</div>
+            <div class="timeline-current-title">${timelineCanManage ? '尚未指定' : '等待 KP 推进'}</div>
+            <div class="timeline-current-body">${timelineCanManage ? '添加节点后，可点击「设为当前」控制玩家看到的进度。' : 'KP 尚未设置当前时间线节点。'}</div>
+          </div>
+        `;
+        return;
+      }
+
+      timelineCurrent.innerHTML = `
+        <div class="timeline-current-card">
+          <div class="timeline-current-label">当前节点</div>
+          <div class="timeline-current-title">${escapeHtml(current.title)}</div>
+          <div class="timeline-current-meta">${escapeHtml(formatRollTime(current.updated_at || current.created_at))}</div>
+          <div class="timeline-current-body">${escapeHtml(current.body || '（无正文）')}</div>
+        </div>
+      `;
+    }
+
+    function renderTimelinePanel(data) {
+      timelineCanManage = !!data.can_manage;
+      timelineState = data.timeline || timelineState || { entries: [], current_entry_id: null, updated_at: null };
+      timelineSubtitle.textContent = timelineCanManage
+        ? 'KP 手动控制剧情节点 · PL 同步查看'
+        : '只读视图 · 当前节点由 KP 控制';
+      timelineKpForm.classList.toggle('hidden', !timelineCanManage);
+      renderTimelineCurrent();
+      renderTimelineList();
+      updateTimelineEntry();
+    }
+
+    function renderTimelineList() {
+      const entries = getTimelineEntries();
+      const currentId = timelineState?.current_entry_id;
+      if (!entries.length) {
+        timelineList.innerHTML = `<div class="timeline-empty">${timelineCanManage ? '尚未添加时间线节点' : 'KP 尚未创建时间线'}</div>`;
+        return;
+      }
+
+      timelineList.replaceChildren();
+      entries.forEach((entry, index) => {
+        const row = document.createElement('div');
+        row.className = `timeline-row${entry.id === currentId ? ' current' : ''}`;
+        const meta = [
+          `#${index + 1}`,
+          formatRollTime(entry.created_at),
+          entry.created_by ? `KP ${entry.created_by}` : '',
+        ].filter(Boolean).join(' · ');
+        row.innerHTML = `
+          <div class="timeline-marker"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-head">
+              <span class="timeline-card-title">${escapeHtml(entry.title)}</span>
+              ${entry.id === currentId ? '<span class="timeline-card-tag">当前</span>' : ''}
+            </div>
+            <div class="timeline-card-meta">${escapeHtml(meta)}</div>
+            <div class="timeline-card-body">${escapeHtml(entry.body || '（无正文）')}</div>
+            ${timelineCanManage ? `
+              <div class="timeline-actions">
+                <button type="button" class="btn-small timeline-action-btn" data-action="current" data-id="${entry.id}" ${entry.id === currentId ? 'disabled' : ''}>设为当前</button>
+                <button type="button" class="btn-small timeline-action-btn" data-action="edit" data-id="${entry.id}">编辑</button>
+                <button type="button" class="btn-small timeline-action-btn" data-action="up" data-id="${entry.id}" ${index === 0 ? 'disabled' : ''}>上移</button>
+                <button type="button" class="btn-small timeline-action-btn" data-action="down" data-id="${entry.id}" ${index === entries.length - 1 ? 'disabled' : ''}>下移</button>
+                <button type="button" class="btn-small timeline-action-btn danger" data-action="delete" data-id="${entry.id}">删除</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        timelineList.appendChild(row);
+      });
+
+      if (timelineCanManage) {
+        bindTimelineActions();
+      }
+    }
+
+    function bindTimelineActions() {
+      timelineList.querySelectorAll('.timeline-action-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const action = btn.dataset.action;
+          if (action === 'current') setTimelineCurrent(id);
+          if (action === 'edit') startEditTimelineEntry(id);
+          if (action === 'up') moveTimelineEntry(id, 'up');
+          if (action === 'down') moveTimelineEntry(id, 'down');
+          if (action === 'delete') deleteTimelineEntry(id);
+        });
+      });
+    }
+
+    function startEditTimelineEntry(entryId) {
+      const entry = getTimelineEntries().find((item) => item.id === entryId);
+      if (!entry) return;
+      timelineEditingId = entryId;
+      timelineTitleInput.value = entry.title || '';
+      timelineBodyInput.value = entry.body || '';
+      timelineFormError.textContent = '';
+      timelineFormTitle.textContent = '编辑时间线节点';
+      timelineSubmitBtn.textContent = '保存修改';
+      timelineCancelEditBtn.classList.remove('hidden');
+      timelineTitleInput.focus();
+    }
+
+    async function submitTimelineEntry() {
+      if (!timelineCanManage) return;
+      timelineFormError.textContent = '';
+      const title = timelineTitleInput.value.trim();
+      const body = timelineBodyInput.value.trim();
+      if (!title) {
+        timelineFormError.textContent = '请输入时间线标题';
+        return;
+      }
+
+      const payload = { title, body };
+      let endpoint = '/api/timeline';
+      if (timelineEditingId != null) {
+        endpoint = '/api/timeline/update';
+        payload.id = timelineEditingId;
+      }
+
+      timelineSubmitBtn.disabled = true;
+      const { data } = await api(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      timelineSubmitBtn.disabled = false;
+
+      if (!data.ok) {
+        timelineFormError.textContent = data.error || '保存失败';
+        return;
+      }
+
+      timelineState = data.timeline;
+      resetTimelineForm();
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
+    }
+
+    async function setTimelineCurrent(entryId) {
+      if (!timelineCanManage) return;
+      const { data } = await api('/api/timeline/current', {
+        method: 'POST',
+        body: JSON.stringify({ id: entryId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '设置失败');
+        return;
+      }
+      timelineState = data.timeline;
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
+    }
+
+    async function moveTimelineEntry(entryId, direction) {
+      if (!timelineCanManage) return;
+      const { data } = await api('/api/timeline/move', {
+        method: 'POST',
+        body: JSON.stringify({ id: entryId, direction }),
+      });
+      if (!data.ok) {
+        alert(data.error || '移动失败');
+        return;
+      }
+      timelineState = data.timeline;
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
+    }
+
+    async function deleteTimelineEntry(entryId) {
+      if (!timelineCanManage) return;
+      const entry = getTimelineEntries().find((item) => item.id === entryId);
+      if (!entry) return;
+      if (!confirm(`确定删除时间线节点「${entry.title || entry.id}」？`)) return;
+      const { data } = await api('/api/timeline/delete', {
+        method: 'POST',
+        body: JSON.stringify({ id: entryId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '删除失败');
+        return;
+      }
+      if (timelineEditingId === entryId) {
+        resetTimelineForm();
+      }
+      timelineState = data.timeline;
+      renderTimelinePanel({ timeline: timelineState, can_manage: timelineCanManage });
+    }
+
+    function formatHandoutTargets(targets) {
+      if (!targets?.length) return '—';
+      if (targets.includes('*')) return '全体玩家';
+      return targets.join('、');
+    }
+
+    function renderHandoutTargetOptions() {
+      const players = currentRoom?.players || [];
+      handoutTargetList.replaceChildren();
+      if (!players.length) {
+        handoutTargetList.innerHTML = '<div class="handout-empty">房间内暂无玩家</div>';
+        return;
+      }
+      players.forEach((pl) => {
+        const label = document.createElement('label');
+        label.className = 'handout-target-item';
+        label.innerHTML = `
+          <input type="checkbox" class="handout-target-checkbox" value="${escapeHtml(pl)}">
+          <span>${escapeHtml(pl)}</span>
+        `;
+        handoutTargetList.appendChild(label);
+      });
+      handoutTargetAll.checked = false;
+      handoutTargetList.querySelectorAll('.handout-target-checkbox').forEach((input) => {
+        input.disabled = false;
+      });
+    }
+
+    function getSelectedHandoutTargets() {
+      if (handoutTargetAll.checked) return ['*'];
+      const selected = [];
+      handoutTargetList.querySelectorAll('.handout-target-checkbox:checked').forEach((input) => {
+        if (input.value) selected.push(input.value);
+      });
+      return selected;
+    }
+
+    function renderHandoutList() {
+      const isKp = !!canSecretRoll;
+      handoutListTitle.textContent = isKp ? '全部线索' : '我的线索';
+      handoutSubtitle.textContent = isKp
+        ? '向指定或全体玩家发放线索'
+        : 'KP 发放的线索将显示在此';
+
+      const visible = isKp
+        ? handoutsCache.slice()
+        : handoutsCache.filter((item) => !item.revoked);
+
+      if (!visible.length) {
+        handoutList.innerHTML = `<div class="handout-empty">${isKp ? '尚未发放线索' : '暂无线索'}</div>`;
+        return;
+      }
+
+      handoutList.replaceChildren();
+      visible.forEach((handout) => {
+        const row = document.createElement('div');
+        row.className = 'handout-row';
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `handout-card${handout.revoked ? ' revoked' : ''}${!handout.read && !isKp ? ' unread' : ''}`;
+        card.dataset.handoutId = handout.id;
+        const time = formatRollTime(handout.created_at);
+        const targets = formatHandoutTargets(handout.targets);
+        const imageTag = handout.image ? '<span class="handout-card-tag">配图</span>' : '';
+        const revokedTag = handout.revoked ? '<span class="handout-card-tag revoked">已撤回</span>' : '';
+        const newTag = !handout.read && !isKp && !handout.revoked ? '<span class="handout-card-tag new">新</span>' : '';
+        card.innerHTML = `
+          <div class="handout-card-head">
+            <span class="handout-card-title">${escapeHtml(handout.title || '未命名线索')}</span>
+            ${newTag}${imageTag}${revokedTag}
+          </div>
+          <div class="handout-card-meta">${escapeHtml(time)} · ${escapeHtml(targets)}</div>
+          <div class="handout-card-preview">${escapeHtml((handout.body || '').slice(0, 80))}${(handout.body || '').length > 80 ? '…' : ''}</div>
+        `;
+        card.addEventListener('click', () => openHandoutDetail(handout.id));
+        row.appendChild(card);
+
+        if (isKp && !handout.revoked) {
+          const revokeBtn = document.createElement('button');
+          revokeBtn.type = 'button';
+          revokeBtn.className = 'handout-revoke-btn';
+          revokeBtn.textContent = '撤回';
+          revokeBtn.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            if (!confirm(`确定撤回线索「${handout.title || handout.id}」？`)) return;
+            const { data } = await api('/api/handouts/revoke', {
+              method: 'POST',
+              body: JSON.stringify({ id: handout.id }),
+            });
+            if (!data.ok) {
+              alert(data.error || '撤回失败');
+              return;
+            }
+            await loadInitialHandouts();
+            renderHandoutList();
+          });
+          row.appendChild(revokeBtn);
+        }
+
+        handoutList.appendChild(row);
+      });
+    }
+
+    async function openHandoutDetail(handoutId) {
+      const handout = handoutsCache.find((item) => item.id === handoutId);
+      if (!handout) return;
+      if (!canSecretRoll && handout.revoked) return;
+
+      await api('/api/handouts/read', {
+        method: 'POST',
+        body: JSON.stringify({ id: handoutId }),
+      });
+      handout.read = true;
+      updateHandoutBadge();
+      if (!handoutPanel.classList.contains('hidden')) {
+        renderHandoutList();
+      }
+
+      handoutDetailTitle.textContent = handout.title || '未命名线索';
+      const time = formatRollTime(handout.created_at);
+      const targets = formatHandoutTargets(handout.targets);
+      handoutDetailMeta.textContent = `${time} · 发放给 ${targets}`;
+      handoutDetailBody.textContent = handout.body || '（无正文）';
+      if (handout.image) {
+        handoutDetailImg.src = handout.image;
+        handoutDetailImg.alt = handout.title || '线索配图';
+        handoutDetailImg.classList.remove('hidden');
+      } else {
+        handoutDetailImg.src = '';
+        handoutDetailImg.classList.add('hidden');
+      }
+      handoutDetailModal.classList.remove('hidden');
+      handoutDetailModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeHandoutDetail() {
+      handoutDetailModal.classList.add('hidden');
+      handoutDetailModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          const comma = result.indexOf(',');
+          resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function submitHandout() {
+      handoutFormError.textContent = '';
+      const title = handoutTitleInput.value.trim();
+      const body = handoutBodyInput.value.trim();
+      const targets = getSelectedHandoutTargets();
+      if (!title) {
+        handoutFormError.textContent = '请输入线索标题';
+        return;
+      }
+      if (!targets.length) {
+        handoutFormError.textContent = '请选择发放对象';
+        return;
+      }
+
+      const payload = { title, body, targets };
+      const imageFile = pendingHandoutImageFile || handoutImageInput.files?.[0];
+      if (imageFile) {
+        if (imageFile.size > 5 * 1024 * 1024) {
+          handoutFormError.textContent = '图片过大，请上传 5MB 以内';
+          return;
+        }
+        try {
+          payload.image_b64 = await fileToBase64(imageFile);
+          payload.filename = imageFile.name || 'handout.png';
+        } catch {
+          handoutFormError.textContent = '读取图片失败';
+          return;
+        }
+      }
+
+      handoutSubmitBtn.disabled = true;
+      const { data } = await api('/api/handouts', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      handoutSubmitBtn.disabled = false;
+      if (!data.ok) {
+        handoutFormError.textContent = data.error || '发放失败';
+        return;
+      }
+
+      handoutTitleInput.value = '';
+      handoutBodyInput.value = '';
+      handoutImageInput.value = '';
+      pendingHandoutImageFile = null;
+      handoutTargetAll.checked = false;
+      handoutTargetList.querySelectorAll('.handout-target-checkbox').forEach((input) => {
+        input.checked = false;
+        input.disabled = false;
+      });
+
+      if (data.handout) {
+        mergeHandouts([data.handout], false);
+        lastHandoutId = Math.max(lastHandoutId, data.handout.id || 0);
+      } else {
+        await loadInitialHandouts();
+      }
+      renderHandoutList();
+    }
+
+    async function showHandoutView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      handoutPanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+
+      const isKp = !!canSecretRoll;
+      handoutKpForm.classList.toggle('hidden', !isKp);
+      handoutList.innerHTML = '<div class="handout-empty">加载中…</div>';
+      if (isKp) {
+        renderHandoutTargetOptions();
+      }
+      await loadInitialHandouts();
+      renderHandoutList();
+    }
+
+    function formatRollTime(iso) {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch {
+        return '';
+      }
+    }
+
+    const OPPOSED_RESULT_LABELS = { win: '胜', lose: '负', draw: '平' };
+
+    function appendRollToLog(roll, prepend) {
+      const item = document.createElement('div');
+      const isOpposed = roll.opposed_group_id != null;
+      item.className = `roll-log-item${roll.hidden ? ' secret' : ''}${isOpposed ? ' opposed' : ''}`;
+      item.dataset.rollId = roll.id;
+      if (isOpposed) item.dataset.opposedGroup = roll.opposed_group_id;
+
+      const valueHidden = !!roll.value_hidden;
+      const checkInfo = !valueHidden && roll.check_label
+        ? `<span class="roll-log-check ${escapeHtml(roll.check_type || '')}">${escapeHtml(roll.check_label)}</span>`
+        : '';
+      const secretTag = roll.hidden ? '<span class="roll-log-secret-tag">暗骰</span>' : '';
+      const opposedTag = isOpposed && roll.opposed_result
+        ? `<span class="roll-log-opposed-tag ${escapeHtml(roll.opposed_result)}">${escapeHtml(OPPOSED_RESULT_LABELS[roll.opposed_result] || '')}</span>`
+        : '';
+      const skillInfo = !valueHidden && roll.skill_value != null
+        ? ` · 鉴定 ${roll.skill_value}`
+        : roll.hidden && valueHidden
+          ? ' · 结果隐藏'
+          : '';
+      const displayValue = valueHidden ? '???' : roll.value;
+
+      item.innerHTML = `
+        <div class="roll-log-item-head">
+          <span class="roll-log-roller">${escapeHtml(roll.roller)}</span>
+          ${secretTag}
+          ${opposedTag}
+          <span class="roll-log-time">${escapeHtml(formatRollTime(roll.timestamp))}</span>
+        </div>
+        <div class="roll-log-item-body">
+          <span class="roll-log-label">${escapeHtml(roll.label)}${escapeHtml(skillInfo)}</span>
+          <span class="roll-log-value${valueHidden ? ' hidden-value' : ''}">${escapeHtml(displayValue)}</span>
+          ${checkInfo}
+        </div>
+      `;
+
+      if (prepend) {
+        rollLogContent.insertBefore(item, rollLogContent.firstChild);
+      } else {
+        rollLogContent.appendChild(item);
+      }
+
+      while (rollLogContent.children.length > 50) {
+        rollLogContent.removeChild(rollLogContent.lastChild);
+      }
+    }
+
+    async function submitRoomRoll(payload) {
+      const { data } = await api('/api/room/roll', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      if (!data.ok) {
+        alert(data.error || '投骰失败');
+        return null;
+      }
+      const empty = rollLogContent.querySelector('.roll-log-empty');
+      if (empty) empty.remove();
+      if (data.roll.id > lastRollId) {
+        appendRollToLog(data.roll, true);
+        lastRollId = data.roll.id;
+      }
+      return data.roll;
+    }
+
+    function isSecretRollEnabled() {
+      return canSecretRoll && secretRollToggle.checked;
     }
 
     function resetGame() {
@@ -445,6 +2159,15 @@
           name: npc.displayName,
           subtitle: npc.subtitle || 'NPC',
         });
+        return;
+      }
+
+      if (currentCharacter?.portrait) {
+        showPortraitModal({
+          portrait: `/assets/${currentCharacter.portrait}`,
+          name: profile?.name || key,
+          subtitle: profile?.occupation || '',
+        });
       }
     }
 
@@ -455,15 +2178,16 @@
 
     function updateInvestigatorBanner(username, profile) {
       const pc = getPcMeta(username);
-      if (!pc) {
+      const generatedPortrait = currentCharacter?.portrait ? `/assets/${currentCharacter.portrait}` : null;
+      if (!pc && !generatedPortrait) {
         investigatorBanner.classList.add('hidden');
         return;
       }
 
-      const name = profile?.name || pc.displayName;
-      const occ = profile?.occupation || pc.occupation;
+      const name = profile?.name || pc?.displayName || username;
+      const occ = profile?.occupation || pc?.occupation || '';
 
-      investigatorPortraitImg.src = pc.portrait;
+      investigatorPortraitImg.src = pc?.portrait || generatedPortrait;
       investigatorPortraitImg.alt = `${name} 肖像`;
       investigatorName.textContent = name;
       investigatorOcc.textContent = occ;
@@ -485,7 +2209,11 @@
     async function loadCharacterData() {
       if (currentUserRole === 'admin' || currentUserRole === 'kp') {
         currentCharacter = null;
-        skillActionsEl.innerHTML = '<div class="skill-empty">管理员 / KP 模式，请使用「玩家信息」</div>';
+        if (currentRoom) {
+          renderKpQuickRolls();
+        } else {
+          skillActionsEl.innerHTML = '<div class="skill-empty">管理员 / KP 模式，请使用「玩家信息」</div>';
+        }
         attrActionsEl.innerHTML = '<div class="skill-empty">—</div>';
         return;
       }
@@ -502,7 +2230,8 @@
       currentCharacter = data.character;
       renderSkillButtons();
       renderAttributeButtons();
-      updateInvestigatorBanner(usernameDisplay.textContent, currentCharacter.profile);
+      updateInvestigatorBanner(currentCharacter.profile?.name, currentCharacter.profile);
+      updateHomeStatus();
     }
 
     function getCharacterAttributes() {
@@ -554,14 +2283,121 @@
       });
     }
 
+    const KP_QUICK_ROLL_PRESETS = [
+      { name: '聆听', value: 25 },
+      { name: '侦查', value: 25 },
+      { name: '潜行', value: 20 },
+      { name: '图书馆使用', value: 20 },
+      { name: '说服', value: 10 },
+      { name: '恐吓', value: 15 },
+      { name: '急救', value: 30 },
+      { name: '心理学', value: 10 },
+      { name: '神秘学', value: 5 },
+      { name: '闪避', value: 25 },
+    ];
+
+    function kpQuickRollStorageKey() {
+      return `htmldice_kp_quickrolls_${currentUsername || 'kp'}`;
+    }
+
+    function loadKpCustomRolls() {
+      try {
+        const raw = localStorage.getItem(kpQuickRollStorageKey());
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveKpCustomRolls(list) {
+      try {
+        localStorage.setItem(kpQuickRollStorageKey(), JSON.stringify(list));
+      } catch (error) {
+        // 本地存储不可用时静默忽略
+      }
+    }
+
+    function renderKpQuickRolls() {
+      const custom = loadKpCustomRolls();
+      const presetHtml = KP_QUICK_ROLL_PRESETS.map(
+        (item, index) => `
+          <button type="button" class="skill-check-btn kp-quickroll-btn" data-kind="preset" data-index="${index}">
+            <span class="skill-btn-name">${escapeHtml(item.name)}</span><span class="skill-btn-val">${item.value}</span>
+          </button>
+        `
+      ).join('');
+      const customHtml = custom
+        .map(
+          (item, index) => `
+            <button type="button" class="skill-check-btn kp-quickroll-btn kp-quickroll-btn--custom" data-kind="custom" data-index="${index}">
+              <span class="skill-btn-name">${escapeHtml(item.name)}</span><span class="skill-btn-val">${escapeHtml(item.value)}</span>
+              <span class="kp-quickroll-remove" data-index="${index}" title="删除">×</span>
+            </button>
+          `
+        )
+        .join('');
+      skillActionsEl.innerHTML = `
+        <div class="kp-quickroll-hint">KP 快速检定 · 点击直接投骰（可配合暗骰开关）</div>
+        <div class="kp-quickroll-grid">
+          ${presetHtml}
+          ${customHtml}
+          <button type="button" class="skill-check-btn kp-quickroll-add" id="kpQuickRollAddBtn">+ 自定义</button>
+        </div>
+      `;
+
+      skillActionsEl.querySelectorAll('.kp-quickroll-btn').forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+          if (event.target.closest('.kp-quickroll-remove')) return;
+          const kind = btn.dataset.kind;
+          const index = Number(btn.dataset.index);
+          const item = kind === 'preset' ? KP_QUICK_ROLL_PRESETS[index] : loadKpCustomRolls()[index];
+          if (!item) return;
+          performD100Check(item.name, Number(item.value));
+        });
+      });
+
+      skillActionsEl.querySelectorAll('.kp-quickroll-remove').forEach((el) => {
+        el.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const index = Number(el.dataset.index);
+          const list = loadKpCustomRolls();
+          list.splice(index, 1);
+          saveKpCustomRolls(list);
+          renderKpQuickRolls();
+        });
+      });
+
+      document.getElementById('kpQuickRollAddBtn')?.addEventListener('click', () => {
+        const name = prompt('检定名称（如：聆听）');
+        if (!name || !name.trim()) return;
+        const valueRaw = prompt('目标值（如：50）');
+        const value = Number(valueRaw);
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          alert('请输入 0-100 的数字');
+          return;
+        }
+        const list = loadKpCustomRolls();
+        list.push({ name: name.trim(), value });
+        saveKpCustomRolls(list);
+        renderKpQuickRolls();
+      });
+    }
+
     function showApp(username, role) {
+      currentUsername = username;
       authPanel.classList.add('hidden');
+      roomPanel.classList.add('hidden');
       appPanel.classList.remove('hidden');
       charPanel.classList.add('hidden');
       playersPanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
       cardEl.classList.remove('sheet-mode');
       usernameDisplay.textContent = username;
       updateRoleUI(role);
+      updatePcBadge();
       loadMapSelection(username);
       loadNpcSelection(username);
       loadPcSelection(username);
@@ -571,11 +2407,1342 @@
       if (getPcMeta(username)) {
         updateInvestigatorBanner(username);
       }
+      if (currentRoom) {
+        refreshRoomUI();
+        refreshCombatAccess();
+        refreshSceneAccess();
+        refreshTimelineState();
+      }
+    }
+
+    function stopScenePolling() {
+      if (scenePollTimer) {
+        clearInterval(scenePollTimer);
+        scenePollTimer = null;
+      }
+    }
+
+    function startScenePolling() {
+      stopScenePolling();
+      if (!currentRoom) return;
+      scenePollTimer = setInterval(refreshSceneState, SCENE_POLL_MS);
+    }
+
+    function updateSceneButton() {
+      sceneBtn.classList.toggle('hidden', !currentRoom);
+    }
+
+    function updateSceneEntry() {
+      const isKp = !!canSecretRoll;
+      const hasScene = !!(sceneState?.image || sceneState?.tokens?.length);
+      const showKpEntry = isKp && currentRoom;
+      const showPlayerEntry = !isKp && currentRoom && hasScene;
+
+      if (showKpEntry || showPlayerEntry) {
+        sceneEntryRow.classList.remove('hidden');
+        if (showKpEntry) {
+          sceneEntryBtn.textContent = hasScene ? '编辑场景地图' : '设置场景地图';
+          sceneEntryHint.textContent = hasScene
+            ? `已设置场景 · ${sceneState.tokens?.length || 0} 个棋子`
+            : '上传背景图并放置 PC / NPC 棋子，玩家将同步查看';
+        } else {
+          sceneEntryBtn.textContent = '查看场景地图';
+          sceneEntryHint.textContent = `当前场景 · ${sceneState.tokens?.length || 0} 个棋子`;
+        }
+      } else {
+        sceneEntryRow.classList.add('hidden');
+      }
+      updateSceneButton();
+    }
+
+    async function refreshSceneAccess() {
+      if (!currentRoom) {
+        sceneCanManage = false;
+        sceneState = null;
+        updateSceneEntry();
+        stopScenePolling();
+        return;
+      }
+      const { data } = await api('/api/scene');
+      if (!data.ok) return;
+      sceneCanManage = !!data.can_manage;
+      sceneState = data.scene;
+      updateSceneEntry();
+      startScenePolling();
+      if (!scenePanel.classList.contains('hidden')) {
+        renderScenePanel(data);
+      }
+    }
+
+    async function refreshSceneState() {
+      const { data } = await api('/api/scene');
+      if (!data.ok) return;
+      sceneCanManage = !!data.can_manage;
+      const prevUpdated = sceneState?.updated_at;
+      sceneState = data.scene;
+      updateSceneEntry();
+      if (!scenePanel.classList.contains('hidden')) {
+        if (sceneDragState || sceneFogPaintState) return;
+        if (prevUpdated !== sceneState?.updated_at || !sceneContent.childElementCount) {
+          renderScenePanel(data);
+        }
+      }
+    }
+
+    async function showSceneView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      scenePanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+      sceneContent.innerHTML = '<div class="scene-empty">加载场景中…</div>';
+      const { data } = await api('/api/scene');
+      if (!data.ok) {
+        sceneContent.innerHTML = `<div class="scene-empty">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+      sceneCanManage = !!data.can_manage;
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel(data);
+    }
+
+    function sceneImageUrl(scene) {
+      if (!scene?.image) return '';
+      const stamp = encodeURIComponent(scene.updated_at || Date.now());
+      return `${scene.image}?t=${stamp}`;
+    }
+
+    function renderScenePanel(data) {
+      const scene = data.scene;
+      const canManage = !!data.can_manage;
+      sceneSubtitle.textContent = canManage ? '拖拽棋子调整位置 · 仅 KP 可编辑' : '只读视图 · 与 KP 同步';
+
+      if (!scene && !canManage) {
+        sceneContent.innerHTML = '<div class="scene-empty">KP 尚未设置场景</div>';
+        return;
+      }
+
+      const fog = scene?.fog || null;
+      const fogEnabled = !!fog;
+      const toolbar = canManage
+        ? `
+          <div class="scene-toolbar">
+            <button id="sceneUploadBtn" type="button" class="btn-small">上传/更换背景</button>
+            <button id="sceneAddNpcBtn" type="button" class="btn-small">添加 NPC</button>
+            <button id="sceneSyncPcBtn" type="button" class="btn-small">同步房间 PC</button>
+            <button id="sceneClearBtn" type="button" class="btn-small scene-clear-btn">清空场景</button>
+          </div>
+          <div class="scene-toolbar scene-fog-toolbar">
+            <button id="sceneFogToggleBtn" type="button" class="btn-small${fogEnabled ? ' scene-fog-active' : ''}">${fogEnabled ? '关闭战争迷雾' : '开启战争迷雾'}</button>
+            ${
+              fogEnabled
+                ? `
+                  <button id="sceneFogModeRevealBtn" type="button" class="btn-small${sceneFogMode === 'reveal' ? ' scene-fog-active' : ''}">画笔：揭开</button>
+                  <button id="sceneFogModeHideBtn" type="button" class="btn-small${sceneFogMode === 'hide' ? ' scene-fog-active' : ''}">画笔：遮盖</button>
+                  <button id="sceneFogRevealAllBtn" type="button" class="btn-small">全部揭开</button>
+                  <button id="sceneFogHideAllBtn" type="button" class="btn-small">全部遮盖</button>
+                `
+                : ''
+            }
+          </div>
+        `
+        : '';
+      const generator = canManage
+        ? `
+          <div class="scene-generate-box">
+            <label class="scene-generate-field">
+              <span>地图描述</span>
+              <textarea id="scenePromptInput" class="scene-generate-input" maxlength="1000" placeholder="例如：废弃医院一楼，有门厅、长走廊、病房、护士站，尽头有通往地下室的楼梯。">${escapeHtml(scene?.generated_prompt || '')}</textarea>
+            </label>
+            <div class="scene-generate-actions">
+              <button id="sceneGenerateBtn" type="button" class="btn-small">根据描述生成地图</button>
+              <span id="sceneGenerateStatus" class="scene-generate-status"></span>
+            </div>
+          </div>
+        `
+        : '';
+
+      const imgUrl = sceneImageUrl(scene);
+      const allTokens = scene?.tokens || [];
+      const tokens =
+        fogEnabled && !canManage
+          ? allTokens.filter((token) => isFogCellRevealed(fog, token.x, token.y))
+          : allTokens;
+      const tokensHtml = tokens
+        .map(
+          (token) => `
+            <div
+              class="scene-token scene-token--${escapeHtml(token.type)}${canManage ? ' scene-token--draggable' : ''}"
+              data-id="${escapeHtml(token.id)}"
+              style="left:${(token.x * 100).toFixed(2)}%;top:${(token.y * 100).toFixed(2)}%"
+              ${canManage ? 'tabindex="0"' : ''}
+            >
+              <span class="scene-token-label">${escapeHtml(token.label)}</span>
+              ${canManage ? '<button type="button" class="scene-token-delete" aria-label="删除棋子">×</button>' : ''}
+            </div>
+          `
+        )
+        .join('');
+
+      sceneContent.innerHTML = `
+        ${toolbar}
+        ${generator}
+        <div class="scene-canvas-wrap">
+          <div class="scene-stage" id="sceneStage">
+            ${
+              imgUrl
+                ? `<img class="scene-bg" src="${escapeHtml(imgUrl)}" alt="场景背景">`
+                : '<div class="scene-placeholder">上传背景图后开始摆放棋子</div>'
+            }
+            ${tokensHtml}
+            ${fogEnabled ? renderFogLayer(fog, canManage) : ''}
+          </div>
+        </div>
+      `;
+
+      if (canManage) {
+        bindScenePanelEvents();
+      }
+    }
+
+    function isFogCellRevealed(fog, x, y) {
+      if (!fog) return true;
+      const cols = fog.cols || FOG_COLS;
+      const rows = fog.rows || FOG_ROWS;
+      const cx = Math.min(cols - 1, Math.max(0, Math.floor(clamp01(x) * cols)));
+      const cy = Math.min(rows - 1, Math.max(0, Math.floor(clamp01(y) * rows)));
+      const revealed = fog.revealed || '';
+      return revealed[cy * cols + cx] === '1';
+    }
+
+    function renderFogLayer(fog, canManage) {
+      const cols = fog.cols || FOG_COLS;
+      const rows = fog.rows || FOG_ROWS;
+      const revealed = fog.revealed || '';
+      let cellsHtml = '';
+      for (let cy = 0; cy < rows; cy += 1) {
+        for (let cx = 0; cx < cols; cx += 1) {
+          const isRevealed = revealed[cy * cols + cx] === '1';
+          const cls = isRevealed ? 'scene-fog-cell scene-fog-cell--revealed' : 'scene-fog-cell';
+          cellsHtml += `<div class="${cls}" data-cx="${cx}" data-cy="${cy}"></div>`;
+        }
+      }
+      return `
+        <div
+          id="sceneFogLayer"
+          class="scene-fog-layer${canManage ? ' scene-fog-layer--kp' : ' scene-fog-layer--pl'}"
+          style="grid-template-columns:repeat(${cols}, 1fr);grid-template-rows:repeat(${rows}, 1fr)"
+        >
+          ${cellsHtml}
+        </div>
+      `;
+    }
+
+    function clamp01(value) {
+      return Math.max(0, Math.min(1, value));
+    }
+
+    function bindScenePanelEvents() {
+      const uploadBtn = document.getElementById('sceneUploadBtn');
+      const addNpcBtn = document.getElementById('sceneAddNpcBtn');
+      const syncPcBtn = document.getElementById('sceneSyncPcBtn');
+      const clearBtn = document.getElementById('sceneClearBtn');
+      const generateBtn = document.getElementById('sceneGenerateBtn');
+      const promptInput = document.getElementById('scenePromptInput');
+      const stage = document.getElementById('sceneStage');
+      const fogToggleBtn = document.getElementById('sceneFogToggleBtn');
+      const fogModeRevealBtn = document.getElementById('sceneFogModeRevealBtn');
+      const fogModeHideBtn = document.getElementById('sceneFogModeHideBtn');
+      const fogRevealAllBtn = document.getElementById('sceneFogRevealAllBtn');
+      const fogHideAllBtn = document.getElementById('sceneFogHideAllBtn');
+      const fogLayer = document.getElementById('sceneFogLayer');
+
+      uploadBtn?.addEventListener('click', () => sceneFileInput.click());
+      addNpcBtn?.addEventListener('click', addSceneNpcToken);
+      syncPcBtn?.addEventListener('click', syncScenePcTokens);
+      clearBtn?.addEventListener('click', clearScene);
+      generateBtn?.addEventListener('click', generateSceneMap);
+      fogToggleBtn?.addEventListener('click', toggleSceneFog);
+      fogModeRevealBtn?.addEventListener('click', () => setSceneFogMode('reveal'));
+      fogModeHideBtn?.addEventListener('click', () => setSceneFogMode('hide'));
+      fogRevealAllBtn?.addEventListener('click', () => resetSceneFog(true));
+      fogHideAllBtn?.addEventListener('click', () => resetSceneFog(false));
+      if (fogLayer) {
+        fogLayer.addEventListener('pointerdown', (event) => startFogPaint(event, fogLayer));
+      }
+      promptInput?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          generateSceneMap();
+        }
+      });
+
+      stage?.querySelectorAll('.scene-token--draggable').forEach((tokenEl) => {
+        tokenEl.addEventListener('pointerdown', (event) => startSceneDrag(event, tokenEl));
+      });
+
+      stage?.querySelectorAll('.scene-token-delete').forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const tokenEl = btn.closest('.scene-token');
+          if (tokenEl?.dataset.id) deleteSceneToken(tokenEl.dataset.id);
+        });
+      });
+    }
+
+    async function generateSceneMap() {
+      const promptInput = document.getElementById('scenePromptInput');
+      const generateBtn = document.getElementById('sceneGenerateBtn');
+      const statusEl = document.getElementById('sceneGenerateStatus');
+      const prompt = promptInput?.value.trim() || '';
+      if (!prompt) {
+        if (statusEl) statusEl.textContent = '请输入地图描述';
+        promptInput?.focus();
+        return;
+      }
+      if (prompt.length > 1000) {
+        if (statusEl) statusEl.textContent = '地图描述不能超过 1000 字';
+        return;
+      }
+
+      if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.textContent = '生成中…';
+      }
+      if (statusEl) statusEl.textContent = '正在绘制地图';
+
+      let data = null;
+      try {
+        const response = await api('/api/scene/generate', {
+          method: 'POST',
+          body: JSON.stringify({ prompt }),
+        });
+        data = response.data;
+      } catch (error) {
+        if (statusEl) statusEl.textContent = '生成失败，请稍后重试';
+      } finally {
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generateBtn.textContent = '根据描述生成地图';
+        }
+      }
+      if (!data?.ok) {
+        if (statusEl && data) statusEl.textContent = data.error || '生成失败';
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    function startSceneDrag(event, tokenEl) {
+      if (!sceneCanManage || event.button !== 0) return;
+      const stage = document.getElementById('sceneStage');
+      if (!stage) return;
+      event.preventDefault();
+      sceneDragState = {
+        id: tokenEl.dataset.id,
+        tokenEl,
+        stage,
+        pointerId: event.pointerId,
+      };
+      tokenEl.setPointerCapture(event.pointerId);
+      tokenEl.classList.add('scene-token--dragging');
+
+      const onMove = (moveEvent) => {
+        if (!sceneDragState || moveEvent.pointerId !== sceneDragState.pointerId) return;
+        const rect = stage.getBoundingClientRect();
+        const x = clamp01((moveEvent.clientX - rect.left) / rect.width);
+        const y = clamp01((moveEvent.clientY - rect.top) / rect.height);
+        tokenEl.style.left = `${(x * 100).toFixed(2)}%`;
+        tokenEl.style.top = `${(y * 100).toFixed(2)}%`;
+      };
+
+      const onUp = async (upEvent) => {
+        if (!sceneDragState || upEvent.pointerId !== sceneDragState.pointerId) return;
+        tokenEl.releasePointerCapture(upEvent.pointerId);
+        tokenEl.classList.remove('scene-token--dragging');
+        const rect = stage.getBoundingClientRect();
+        const x = clamp01((upEvent.clientX - rect.left) / rect.width);
+        const y = clamp01((upEvent.clientY - rect.top) / rect.height);
+        const tokenId = sceneDragState.id;
+        sceneDragState = null;
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        await saveSceneTokenPosition(tokenId, x, y);
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    }
+
+    async function saveSceneTokenPosition(tokenId, x, y) {
+      const { data } = await api('/api/scene/token', {
+        method: 'POST',
+        body: JSON.stringify({ id: tokenId, x, y }),
+      });
+      if (!data.ok) {
+        alert(data.error || '保存棋子位置失败');
+        renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+    }
+
+    async function addSceneNpcToken() {
+      const label = prompt('NPC 名称');
+      if (!label || !label.trim()) return;
+      const { data } = await api('/api/scene/token', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'npc', label: label.trim(), x: 0.5, y: 0.5 }),
+      });
+      if (!data.ok) {
+        alert(data.error || '添加 NPC 失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    async function syncScenePcTokens() {
+      const { data } = await api('/api/scene/sync-pcs', { method: 'POST', body: '{}' });
+      if (!data.ok) {
+        alert(data.error || '同步失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    async function deleteSceneToken(tokenId) {
+      const { data } = await api('/api/scene/token', {
+        method: 'DELETE',
+        body: JSON.stringify({ id: tokenId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '删除失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    async function toggleSceneFog() {
+      const enabled = !sceneState?.fog;
+      const { data } = await api('/api/scene/fog/toggle', {
+        method: 'POST',
+        body: JSON.stringify({ enabled }),
+      });
+      if (!data.ok) {
+        alert(data.error || '操作失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    function setSceneFogMode(mode) {
+      sceneFogMode = mode;
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    async function resetSceneFog(reveal) {
+      const { data } = await api('/api/scene/fog/reset', {
+        method: 'POST',
+        body: JSON.stringify({ reveal }),
+      });
+      if (!data.ok) {
+        alert(data.error || '操作失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    function cellFromPointer(event, fogLayer, fog) {
+      const rect = fogLayer.getBoundingClientRect();
+      const cols = fog.cols || FOG_COLS;
+      const rows = fog.rows || FOG_ROWS;
+      const cx = Math.min(cols - 1, Math.max(0, Math.floor(((event.clientX - rect.left) / rect.width) * cols)));
+      const cy = Math.min(rows - 1, Math.max(0, Math.floor(((event.clientY - rect.top) / rect.height) * rows)));
+      return { cx, cy };
+    }
+
+    function paintFogCellLocal(fogLayer, cx, cy, reveal) {
+      const cell = fogLayer.querySelector(`.scene-fog-cell[data-cx="${cx}"][data-cy="${cy}"]`);
+      if (cell) cell.classList.toggle('scene-fog-cell--revealed', reveal);
+    }
+
+    function startFogPaint(event, fogLayer) {
+      if (!sceneCanManage || event.button !== 0 || !sceneState?.fog) return;
+      event.preventDefault();
+      const reveal = sceneFogMode === 'reveal';
+      const painted = new Set();
+      sceneFogPaintState = { pointerId: event.pointerId, reveal, cells: painted };
+      fogLayer.setPointerCapture(event.pointerId);
+
+      const paintAt = (evt) => {
+        const { cx, cy } = cellFromPointer(evt, fogLayer, sceneState.fog);
+        const key = `${cx},${cy}`;
+        if (!painted.has(key)) {
+          painted.add(key);
+          paintFogCellLocal(fogLayer, cx, cy, reveal);
+        }
+      };
+      paintAt(event);
+
+      const onMove = (moveEvent) => {
+        if (!sceneFogPaintState || moveEvent.pointerId !== sceneFogPaintState.pointerId) return;
+        paintAt(moveEvent);
+      };
+
+      const onUp = async (upEvent) => {
+        if (!sceneFogPaintState || upEvent.pointerId !== sceneFogPaintState.pointerId) return;
+        fogLayer.releasePointerCapture(upEvent.pointerId);
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        const cells = Array.from(painted).map((key) => key.split(',').map(Number));
+        sceneFogPaintState = null;
+        if (!cells.length) return;
+        const { data } = await api('/api/scene/fog/paint', {
+          method: 'POST',
+          body: JSON.stringify({ cells, reveal }),
+        });
+        if (!data.ok) {
+          alert(data.error || '涂抹迷雾失败');
+          renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+          return;
+        }
+        sceneState = data.scene;
+        updateSceneEntry();
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    }
+
+    async function clearScene() {
+      if (!confirm('确定清空场景图与所有棋子？')) return;
+      const { data } = await api('/api/scene/clear', { method: 'POST', body: '{}' });
+      if (!data.ok) {
+        alert(data.error || '清空失败');
+        return;
+      }
+      sceneState = null;
+      updateSceneEntry();
+      renderScenePanel({ scene: null, can_manage: sceneCanManage });
+    }
+
+    async function uploadSceneImage(file) {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result || '';
+          const comma = String(result).indexOf(',');
+          resolve(comma >= 0 ? String(result).slice(comma + 1) : String(result));
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const { data } = await api('/api/scene/image', {
+        method: 'POST',
+        body: JSON.stringify({ file: base64, filename: file.name }),
+      });
+      if (!data.ok) {
+        alert(data.error || '上传失败');
+        return;
+      }
+      sceneState = data.scene;
+      updateSceneEntry();
+      renderScenePanel({ scene: sceneState, can_manage: sceneCanManage });
+    }
+
+    function stopCombatPolling() {
+      if (combatPollTimer) {
+        clearInterval(combatPollTimer);
+        combatPollTimer = null;
+      }
+    }
+
+    function startCombatPolling() {
+      stopCombatPolling();
+      if (!combatCanView) return;
+      combatPollTimer = setInterval(refreshCombatState, COMBAT_POLL_MS);
+    }
+
+    function updateCombatButton() {
+      const isStaff = currentUserRole === 'admin' || currentUserRole === 'kp';
+      const inCombat = !!combatState?.active;
+      const showForPlayer = inCombat && combatCanView && !isStaff;
+      combatBtn.classList.toggle('hidden', !(isStaff || showForPlayer));
+      combatBtn.textContent = inCombat ? '战斗中' : '战斗';
+      updateCombatEntry();
+    }
+
+    async function refreshCombatAccess() {
+      if (!currentRoom) {
+        combatCanManage = false;
+        combatCanView = false;
+        combatState = null;
+        updateCombatButton();
+        stopCombatPolling();
+        return;
+      }
+      const { data } = await api('/api/combat');
+      if (!data.ok) return;
+      combatCanManage = !!data.can_manage;
+      combatCanView = !!data.can_view;
+      combatState = data.combat;
+      combatRoomPlayers = data.room_players || [];
+      monsterTemplates = data.monster_templates || monsterTemplates;
+      updateCombatButton();
+      if (combatCanView && combatState?.active) {
+        startCombatPolling();
+      } else {
+        stopCombatPolling();
+      }
+      if (!combatPanel.classList.contains('hidden')) {
+        renderCombatPanel(data);
+      }
+    }
+
+    async function refreshCombatState(forceRender = false) {
+      const { data } = await api('/api/combat');
+      if (!data.ok) return;
+      combatCanManage = !!data.can_manage;
+      combatCanView = !!data.can_view;
+      const prevUpdated = combatState?.updated_at;
+      combatState = data.combat;
+      combatRoomPlayers = data.room_players || combatRoomPlayers;
+      monsterTemplates = data.monster_templates || monsterTemplates;
+      if (!monsterTemplates.length) {
+        await ensureMonsterTemplates();
+        data.monster_templates = monsterTemplates;
+      }
+      updateCombatButton();
+      if (!combatCanView) {
+        showDiceView();
+        return;
+      }
+      if (!combatPanel.classList.contains('hidden')) {
+        const combatChanged = prevUpdated !== combatState?.updated_at;
+        if (forceRender || combatChanged || !combatContent.childElementCount) {
+          renderCombatPanel(data);
+        }
+      }
+    }
+
+    async function showCombatView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      combatPanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+      await ensureMonsterTemplates();
+      await refreshSceneAccess();
+      await refreshCombatState(true);
+    }
+
+    function renderMonsterSkillChips(skills) {
+      if (!skills?.length) {
+        return '<span class="combat-empty-inline">无技能</span>';
+      }
+      return skills
+        .map(
+          (skill) =>
+            `<span class="combat-skill-chip">${escapeHtml(skill.name)} ${escapeHtml(skill.value)}</span>`
+        )
+        .join('');
+    }
+
+    function monsterFromTemplate(template) {
+      return {
+        name: template.name,
+        dex: template.dex,
+        hp: template.hp,
+        template_id: template.id,
+        skills: (template.skills || []).map((skill) => ({ name: skill.name, value: skill.value })),
+      };
+    }
+
+    async function ensureMonsterTemplates() {
+      if (monsterTemplates.length) return monsterTemplates;
+      const { data } = await api('/api/monsters');
+      if (data.ok && data.monsters?.length) {
+        monsterTemplates = data.monsters;
+      }
+      return monsterTemplates;
+    }
+
+    function renderMonsterDetailPreview(template) {
+      if (!template) return '选择图鉴怪物查看属性';
+      return `
+        <div class="combat-bestiary-name">${escapeHtml(template.name)}</div>
+        <div class="combat-bestiary-meta">HP ${escapeHtml(template.hp)} · 敏捷 ${escapeHtml(template.dex)}</div>
+        <div class="combat-bestiary-skills-label">技能</div>
+        <div class="combat-skill-chips">${renderMonsterSkillChips(template.skills)}</div>
+      `;
+    }
+
+    function renderMonsterBestiaryHtml(templates, prefix) {
+      if (!templates.length) {
+        return `
+          <div class="combat-bestiary combat-bestiary--empty">
+            <div class="combat-empty">怪物图鉴未加载，请刷新页面或重新进入战斗面板</div>
+          </div>
+        `;
+      }
+      const options = templates
+        .map(
+          (template) =>
+            `<option value="${escapeHtml(template.id)}">${escapeHtml(template.name)}</option>`
+        )
+        .join('');
+      return `
+        <div class="combat-bestiary">
+          <div class="combat-bestiary-row">
+            <label class="combat-field">
+              <span>怪物图鉴</span>
+              <select id="${prefix}BestiarySelect" class="map-select combat-bestiary-select">
+                <option value="">选择图鉴怪物…</option>
+                ${options}
+              </select>
+            </label>
+            <button type="button" id="${prefix}BestiaryAddBtn" class="btn-small">加入遭遇</button>
+            <button type="button" id="${prefix}BestiaryFillBtn" class="btn-small">填入表单</button>
+          </div>
+          <div id="${prefix}BestiaryPreview" class="combat-bestiary-preview combat-empty">选择图鉴怪物查看属性</div>
+        </div>
+      `;
+    }
+
+    function bindMonsterBestiary(prefix, templates, handlers) {
+      const select = document.getElementById(`${prefix}BestiarySelect`);
+      const preview = document.getElementById(`${prefix}BestiaryPreview`);
+      const addBtn = document.getElementById(`${prefix}BestiaryAddBtn`);
+      const fillBtn = document.getElementById(`${prefix}BestiaryFillBtn`);
+
+      function getSelectedTemplate() {
+        const templateId = select?.value;
+        return templates.find((item) => item.id === templateId) || null;
+      }
+
+      function updatePreview() {
+        const template = getSelectedTemplate();
+        if (!preview) return;
+        if (!template) {
+          preview.innerHTML = '选择图鉴怪物查看属性';
+          preview.classList.add('combat-empty');
+          return;
+        }
+        preview.classList.remove('combat-empty');
+        preview.innerHTML = renderMonsterDetailPreview(template);
+      }
+
+      function handleSelectChange() {
+        updatePreview();
+        const template = getSelectedTemplate();
+        if (template) {
+          handlers.onFill?.(template);
+        }
+      }
+
+      select?.addEventListener('change', handleSelectChange);
+      select?.addEventListener('input', handleSelectChange);
+      fillBtn?.addEventListener('click', () => {
+        const template = getSelectedTemplate();
+        if (!template) return;
+        handlers.onFill?.(template);
+      });
+      addBtn?.addEventListener('click', () => {
+        const template = getSelectedTemplate();
+        if (!template) {
+          alert('请先选择图鉴怪物');
+          return;
+        }
+        handlers.onAdd?.(template);
+      });
+      if (select?.value) {
+        handleSelectChange();
+      }
+    }
+
+    function renderMonsterSkillButtons(monster, canManage) {
+      if (!canManage || !monster.skills?.length) return '';
+      const disabled = !monster.alive || monster.dead;
+      return `
+        <div class="monster-skill-actions">
+          ${monster.skills
+            .map(
+              (skill) => `
+                <button
+                  type="button"
+                  class="monster-skill-btn"
+                  data-monster-id="${escapeHtml(monster.id)}"
+                  data-skill-name="${escapeHtml(skill.name)}"
+                  data-skill-value="${escapeHtml(skill.value)}"
+                  data-monster-name="${escapeHtml(monster.name)}"
+                  ${disabled ? 'disabled' : ''}
+                >${escapeHtml(skill.name)} ${escapeHtml(skill.value)}</button>
+              `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+
+    function renderCombatSetup(data) {
+      const templates = data.monster_templates || monsterTemplates || [];
+      monsterTemplates = templates;
+      const mapOptions = Object.entries(data.maps || MAP_LOCATIONS)
+        .map(([key, label]) => `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`)
+        .join('');
+      const players = data.room_players || [];
+      const playerChecks = players.length
+        ? players.map((username) => `
+            <label class="combat-check">
+              <input type="checkbox" name="combatPlayer" value="${escapeHtml(username)}" checked>
+              <span>${escapeHtml(username)}</span>
+            </label>
+          `).join('')
+        : '<div class="combat-empty">房间内暂无玩家，请等待玩家加入</div>';
+      const hasSceneMap = !!sceneState?.image;
+      const sceneNpcTokens = (sceneState?.tokens || []).filter((token) => token.type === 'npc');
+      const sceneNpcHtml = sceneNpcTokens.length
+        ? `
+          <div class="combat-scene-import">
+            <div class="combat-scene-import-title">从场景导入 NPC</div>
+            <div class="combat-scene-import-list">
+              ${sceneNpcTokens.map((token, index) => `
+                <button type="button" class="btn-small combat-import-npc-btn" data-index="${index}">
+                  ${escapeHtml(token.label)}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `
+        : '';
+      const sceneMapHtml = hasSceneMap
+        ? `
+          <label class="combat-scene-map-toggle">
+            <input id="useSceneMapCheckbox" type="checkbox">
+            <span>使用当前场景地图作为战斗地点</span>
+          </label>
+          <div class="combat-scene-hint">房间已设置场景背景图，勾选后战斗记录将显示「当前场景」</div>
+        `
+        : '';
+
+      combatSubtitle.textContent = hasSceneMap
+        ? '可引用场景地图 · 选择参战玩家并创建怪物'
+        : '选择地图、参战玩家并创建怪物';
+      combatContent.innerHTML = `
+        <section class="combat-section">
+          <h2>开战设置</h2>
+          ${sceneMapHtml}
+          <label class="combat-field" id="combatMapField">
+            <span>地图</span>
+            <select id="combatMapSelect" class="map-select">
+              <option value="">选择地点…</option>
+              ${mapOptions}
+            </select>
+          </label>
+        </section>
+        <section class="combat-section">
+          <h2>参战玩家</h2>
+          <div class="combat-checks">${playerChecks}</div>
+        </section>
+        <section class="combat-section">
+          <h2>创建怪物</h2>
+          ${renderMonsterBestiaryHtml(templates, 'setup')}
+          ${sceneNpcHtml}
+          <div class="combat-form-grid">
+            <input id="monsterNameInput" class="auth-input" type="text" maxlength="30" placeholder="怪物名称">
+            <input id="monsterDexInput" class="auth-input" type="number" min="0" max="999" placeholder="敏捷">
+            <input id="monsterHpInput" class="auth-input" type="number" min="1" max="9999" placeholder="血量">
+            <input id="monsterPortraitDescInput" class="auth-input" type="text" maxlength="200" placeholder="外貌描述（可选，用于生成头像）">
+            <button id="addMonsterBtn" type="button" class="btn-small">添加怪物</button>
+          </div>
+          <div id="setupMonsterList" class="combat-entity-list">
+            <div class="combat-empty">尚未添加怪物</div>
+          </div>
+        </section>
+        <div class="combat-actions">
+          <button id="startCombatBtn" type="button">开始战斗</button>
+        </div>
+        <p id="combatSetupError" class="auth-error"></p>
+      `;
+
+      const setupMonsters = [];
+      const setupMonsterList = document.getElementById('setupMonsterList');
+      const setupError = document.getElementById('combatSetupError');
+      const useSceneMapCheckbox = document.getElementById('useSceneMapCheckbox');
+      const combatMapField = document.getElementById('combatMapField');
+      const combatMapSelect = document.getElementById('combatMapSelect');
+
+      function updateCombatMapFieldState() {
+        const useScene = !!useSceneMapCheckbox?.checked;
+        if (combatMapField) {
+          combatMapField.classList.toggle('combat-field--disabled', useScene);
+        }
+        if (combatMapSelect) {
+          combatMapSelect.disabled = useScene;
+        }
+      }
+
+      useSceneMapCheckbox?.addEventListener('change', updateCombatMapFieldState);
+      updateCombatMapFieldState();
+
+      bindMonsterBestiary('setup', templates, {
+        onFill(template) {
+          document.getElementById('monsterNameInput').value = template.name || '';
+          document.getElementById('monsterDexInput').value = String(template.dex ?? '');
+          document.getElementById('monsterHpInput').value = String(template.hp ?? '');
+        },
+        onAdd(template) {
+          setupMonsters.push(monsterFromTemplate(template));
+          renderSetupMonsters();
+        },
+      });
+
+      document.querySelectorAll('.combat-import-npc-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const token = sceneNpcTokens[Number(btn.dataset.index)];
+          if (!token) return;
+          document.getElementById('monsterNameInput').value = token.label || '';
+          if (!document.getElementById('monsterDexInput').value) {
+            document.getElementById('monsterDexInput').value = '50';
+          }
+          if (!document.getElementById('monsterHpInput').value) {
+            document.getElementById('monsterHpInput').value = '10';
+          }
+          document.getElementById('monsterNameInput').focus();
+        });
+      });
+
+      function renderSetupMonsters() {
+        if (!setupMonsters.length) {
+          setupMonsterList.innerHTML = '<div class="combat-empty">尚未添加怪物</div>';
+          return;
+        }
+        setupMonsterList.innerHTML = setupMonsters.map((monster, index) => `
+          <div class="combat-entity-card combat-entity-card--monster">
+            <div class="combat-entity-name">${escapeHtml(monster.name)}</div>
+            <div class="combat-entity-meta">敏捷 ${escapeHtml(monster.dex)} · HP ${escapeHtml(formatStatCurrentMax(monster.hp, monster.hp))}</div>
+            <div class="combat-bestiary-skills-label">技能</div>
+            <div class="combat-skill-chips">${renderMonsterSkillChips(monster.skills)}</div>
+            <button type="button" class="btn-small combat-remove-btn" data-index="${index}">移除</button>
+          </div>
+        `).join('');
+        setupMonsterList.querySelectorAll('.combat-remove-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            setupMonsters.splice(Number(btn.dataset.index), 1);
+            renderSetupMonsters();
+          });
+        });
+      }
+
+      document.getElementById('addMonsterBtn').addEventListener('click', () => {
+        const name = document.getElementById('monsterNameInput').value.trim();
+        const dex = Number(document.getElementById('monsterDexInput').value);
+        const hp = Number(document.getElementById('monsterHpInput').value);
+        setupError.textContent = '';
+        if (!name) {
+          setupError.textContent = '请输入怪物名称';
+          return;
+        }
+        if (!Number.isFinite(dex) || !Number.isFinite(hp) || hp <= 0) {
+          setupError.textContent = '请填写有效的敏捷与血量';
+          return;
+        }
+        const portraitDescription = document.getElementById('monsterPortraitDescInput').value.trim();
+        setupMonsters.push({ name, dex, hp, portrait_description: portraitDescription });
+        document.getElementById('monsterNameInput').value = '';
+        document.getElementById('monsterDexInput').value = '';
+        document.getElementById('monsterHpInput').value = '';
+        document.getElementById('monsterPortraitDescInput').value = '';
+        renderSetupMonsters();
+      });
+
+      document.getElementById('startCombatBtn').addEventListener('click', async () => {
+        const useSceneMap = !!useSceneMapCheckbox?.checked;
+        const map = document.getElementById('combatMapSelect').value;
+        const selectedPlayers = [...document.querySelectorAll('input[name="combatPlayer"]:checked')].map((el) => el.value);
+        setupError.textContent = '';
+        if (!useSceneMap && !map) {
+          setupError.textContent = '请选择地图，或勾选使用当前场景地图';
+          return;
+        }
+        if (!selectedPlayers.length) {
+          setupError.textContent = '请选择参战玩家';
+          return;
+        }
+        if (!setupMonsters.length) {
+          setupError.textContent = '请至少添加一个怪物';
+          return;
+        }
+        const { data: result } = await api('/api/combat/start', {
+          method: 'POST',
+          body: JSON.stringify({
+            map: useSceneMap ? '' : map,
+            use_scene_map: useSceneMap,
+            players: selectedPlayers,
+            monsters: setupMonsters,
+          }),
+        });
+        if (!result.ok) {
+          setupError.textContent = result.error || '开战失败';
+          return;
+        }
+        combatState = result.combat;
+        updateCombatButton();
+        startCombatPolling();
+        renderCombatPanel({ ...data, combat: result.combat, can_manage: true, can_view: true });
+      });
+    }
+
+    function renderTurnOrder(combat) {
+      if (!combat.turn_order?.length) {
+        return '<div class="combat-empty">暂无行动单位</div>';
+      }
+      return `
+        <ol class="combat-turn-order">
+          ${combat.turn_order.map((actor, index) => `
+            <li class="combat-turn-item${index === combat.current_turn_index ? ' current' : ''}${actor.type === 'monster' ? ' monster' : ''}">
+              <span class="combat-turn-index">${index + 1}</span>
+              <span class="combat-turn-name">${escapeHtml(actor.name)}</span>
+              <span class="combat-turn-meta">${actor.type === 'monster' ? '怪物' : '玩家'} · 敏捷 ${escapeHtml(actor.dex)}</span>
+            </li>
+          `).join('')}
+        </ol>
+      `;
+    }
+
+    function combatHpText(entity) {
+      return formatStatCurrentMax(entity.hp, entity.max_hp ?? entity.hp);
+    }
+
+    function renderCombatEntityControls(type, entity, canManage) {
+      if (!canManage) {
+        return `<span class="combat-hp-readonly">HP ${escapeHtml(combatHpText(entity))}</span>`;
+      }
+      const id = type === 'player' ? entity.username : entity.id;
+      const deadClass = !entity.alive || entity.dead ? ' dead' : '';
+      let extra = '';
+      if (type === 'monster' && canManage) {
+        const isCurrentMonster = combatState?.current_actor?.type === 'monster'
+          && combatState?.current_actor?.id === entity.id
+          && entity.alive
+          && !entity.dead;
+        extra = `
+          <button type="button" class="btn-small combat-kill-btn" data-monster-id="${escapeHtml(entity.id)}">击杀</button>
+          <button type="button" class="btn-small combat-target-btn${isCurrentMonster ? ' highlight' : ''}" data-monster-id="${escapeHtml(entity.id)}" ${entity.alive && !entity.dead ? '' : 'disabled'}>随机攻击目标</button>
+        `;
+      }
+      return `
+        <div class="combat-hp-controls${deadClass}">
+          <button type="button" class="kp-adjust-btn minus" data-type="${type}" data-id="${escapeHtml(id)}" data-delta="-1">-1</button>
+          <span class="kp-stat-value">${escapeHtml(combatHpText(entity))}</span>
+          <button type="button" class="kp-adjust-btn plus" data-type="${type}" data-id="${escapeHtml(id)}" data-delta="1">+1</button>
+          ${extra}
+        </div>
+      `;
+    }
+
+    function renderCombatActive(data) {
+      const combat = data.combat;
+      const canManage = !!data.can_manage;
+      const templates = data.monster_templates || monsterTemplates || [];
+      combatSubtitle.textContent = `${combat.map_label || '未知地图'} · 建议行动轮次`;
+      const currentActor = combat.current_actor;
+      const currentHint = currentActor
+        ? `当前行动：${currentActor.name}（${currentActor.type === 'monster' ? '怪物' : '玩家'}）`
+        : '暂无行动单位';
+
+      combatContent.innerHTML = `
+        <section class="combat-section">
+          <div class="combat-status-row">
+            <div class="combat-current">${escapeHtml(currentHint)}</div>
+            ${canManage ? '<button id="nextTurnBtn" type="button" class="btn-small">下一行动</button>' : ''}
+            ${canManage ? '<button id="endCombatBtn" type="button" class="btn-small combat-end-btn">结束战斗</button>' : ''}
+          </div>
+        </section>
+        <section class="combat-section">
+          <h2>行动轮次</h2>
+          ${renderTurnOrder(combat)}
+        </section>
+        <section class="combat-section combat-columns">
+          <div>
+            <h2>玩家</h2>
+            <div class="combat-entity-list">
+              ${combat.players.map((player) => `
+                <div class="combat-entity-card${player.alive ? '' : ' dead'}">
+                  <div class="combat-entity-name">${escapeHtml(player.name)}</div>
+                  <div class="combat-entity-meta">账号 ${escapeHtml(player.username)} · 敏捷 ${escapeHtml(player.dex)}</div>
+                  ${renderCombatEntityControls('player', player, canManage)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          <div>
+            <h2>怪物</h2>
+            ${canManage ? `
+              ${renderMonsterBestiaryHtml(templates, 'live')}
+              <div class="combat-form-grid combat-inline-add">
+                <input id="liveMonsterName" class="auth-input" type="text" maxlength="30" placeholder="怪物名称">
+                <input id="liveMonsterDex" class="auth-input" type="number" min="0" placeholder="敏捷">
+                <input id="liveMonsterHp" class="auth-input" type="number" min="1" placeholder="血量">
+                <input id="liveMonsterPortraitDesc" class="auth-input" type="text" maxlength="200" placeholder="外貌描述（可选，用于生成头像）">
+                <button id="liveAddMonsterBtn" type="button" class="btn-small">添加</button>
+              </div>
+            ` : ''}
+            <div class="combat-entity-list">
+              ${combat.monsters.map((monster) => `
+                <div class="combat-entity-card combat-entity-card--monster${monster.alive && !monster.dead ? '' : ' dead'}">
+                  <div class="combat-entity-head">
+                    ${monster.image ? `<img class="combat-entity-portrait" src="/assets/${escapeHtml(monster.image)}" alt="${escapeHtml(monster.name)} 头像">` : ''}
+                    <div>
+                      <div class="combat-entity-name">${escapeHtml(monster.name)}</div>
+                      <div class="combat-entity-meta">敏捷 ${escapeHtml(monster.dex)} · HP ${escapeHtml(combatHpText(monster))}${monster.dead ? ' · 已死亡' : ''}</div>
+                    </div>
+                  </div>
+                  ${canManage ? `<div class="combat-bestiary-skills-label">技能</div><div class="combat-skill-chips">${renderMonsterSkillChips(monster.skills)}</div>` : ''}
+                  ${renderMonsterSkillButtons(monster, canManage)}
+                  ${renderCombatEntityControls('monster', monster, canManage)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+        <section class="combat-section">
+          <h2>战斗记录</h2>
+          <div class="combat-log">
+            ${(combat.log || []).slice().reverse().map((entry) => `
+              <div class="combat-log-item">
+                <span class="combat-log-time">${escapeHtml(formatRollTime(entry.timestamp))}</span>
+                <span>${escapeHtml(entry.message)}</span>
+              </div>
+            `).join('') || '<div class="combat-empty">暂无记录</div>'}
+          </div>
+        </section>
+      `;
+
+      if (canManage) {
+        combatContent.querySelectorAll('.kp-adjust-btn').forEach((btn) => {
+          btn.addEventListener('click', () => adjustCombatHp(btn.dataset.type, btn.dataset.id, Number(btn.dataset.delta)));
+        });
+        combatContent.querySelectorAll('.combat-kill-btn').forEach((btn) => {
+          btn.addEventListener('click', () => killCombatMonster(btn.dataset.monsterId));
+        });
+        combatContent.querySelectorAll('.combat-target-btn').forEach((btn) => {
+          btn.addEventListener('click', () => randomCombatTarget(btn.dataset.monsterId));
+        });
+        document.getElementById('nextTurnBtn')?.addEventListener('click', nextCombatTurn);
+        document.getElementById('endCombatBtn')?.addEventListener('click', endCombat);
+        document.getElementById('liveAddMonsterBtn')?.addEventListener('click', addLiveMonster);
+        bindMonsterBestiary('live', templates, {
+          onFill(template) {
+            document.getElementById('liveMonsterName').value = template.name || '';
+            document.getElementById('liveMonsterDex').value = String(template.dex ?? '');
+            document.getElementById('liveMonsterHp').value = String(template.hp ?? '');
+          },
+          onAdd(template) {
+            addLiveMonsterFromTemplate(template);
+          },
+        });
+        combatContent.querySelectorAll('.monster-skill-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            performMonsterSkillCheck(
+              btn.dataset.monsterId,
+              btn.dataset.skillName,
+              Number(btn.dataset.skillValue),
+              btn.dataset.monsterName
+            );
+          });
+        });
+      }
+    }
+
+    function renderCombatPanel(data) {
+      if (!data.can_view) {
+        combatContent.innerHTML = '<div class="combat-empty">你不在本场战斗中</div>';
+        return;
+      }
+      if (data.combat?.active) {
+        combatState = data.combat;
+        renderCombatActive(data);
+        return;
+      }
+      if (data.can_manage) {
+        renderCombatSetup(data);
+        return;
+      }
+      combatContent.innerHTML = '<div class="combat-empty">当前没有进行中的战斗</div>';
+    }
+
+    async function adjustCombatHp(targetType, targetId, delta) {
+      const { data } = await api('/api/combat/hp', {
+        method: 'POST',
+        body: JSON.stringify({ target_type: targetType, target_id: targetId, delta }),
+      });
+      if (!data.ok) {
+        alert(data.error || '调整失败');
+        return;
+      }
+      combatState = data.combat;
+      renderCombatPanel({ combat: data.combat, can_manage: true, can_view: true, maps: MAP_LOCATIONS, room_players: combatRoomPlayers });
+    }
+
+    async function killCombatMonster(monsterId) {
+      const { data } = await api('/api/combat/kill', {
+        method: 'POST',
+        body: JSON.stringify({ monster_id: monsterId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '操作失败');
+        return;
+      }
+      combatState = data.combat;
+      renderCombatPanel({ combat: data.combat, can_manage: true, can_view: true, maps: MAP_LOCATIONS, room_players: combatRoomPlayers });
+    }
+
+    async function randomCombatTarget(monsterId) {
+      const { data } = await api('/api/combat/random-target', {
+        method: 'POST',
+        body: JSON.stringify({ monster_id: monsterId }),
+      });
+      if (!data.ok) {
+        alert(data.error || '随机目标失败');
+        return;
+      }
+      combatState = data.combat;
+      renderCombatPanel({ combat: data.combat, can_manage: true, can_view: true, maps: MAP_LOCATIONS, room_players: combatRoomPlayers });
+    }
+
+    async function nextCombatTurn() {
+      const { data } = await api('/api/combat/next-turn', { method: 'POST', body: '{}' });
+      if (!data.ok) {
+        alert(data.error || '切换失败');
+        return;
+      }
+      combatState = data.combat;
+      renderCombatPanel({ combat: data.combat, can_manage: true, can_view: true, maps: MAP_LOCATIONS, room_players: combatRoomPlayers });
+    }
+
+    async function addLiveMonsterPayload(payload) {
+      const { data } = await api('/api/combat/monster', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      if (!data.ok) {
+        alert(data.error || '添加失败');
+        return;
+      }
+      combatState = data.combat;
+      renderCombatPanel({
+        combat: data.combat,
+        can_manage: true,
+        can_view: true,
+        maps: MAP_LOCATIONS,
+        room_players: combatRoomPlayers,
+        monster_templates: monsterTemplates,
+      });
+    }
+
+    async function addLiveMonsterFromTemplate(template) {
+      await addLiveMonsterPayload(monsterFromTemplate(template));
+    }
+
+    async function addLiveMonster() {
+      const name = document.getElementById('liveMonsterName')?.value.trim();
+      const dex = Number(document.getElementById('liveMonsterDex')?.value);
+      const hp = Number(document.getElementById('liveMonsterHp')?.value);
+      const portraitDescription = document.getElementById('liveMonsterPortraitDesc')?.value.trim() || '';
+      if (!name || !Number.isFinite(dex) || !Number.isFinite(hp) || hp <= 0) {
+        alert('请填写有效的怪物信息');
+        return;
+      }
+      await addLiveMonsterPayload({ name, dex, hp, skills: [], portrait_description: portraitDescription });
+    }
+
+    function showEndCombatModal() {
+      combatWritebackToggle.checked = true;
+      combatEndModal.classList.remove('hidden');
+      combatEndModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideEndCombatModal() {
+      combatEndModal.classList.add('hidden');
+      combatEndModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function formatCombatWritebackMessage(writeback) {
+      if (!writeback) return '';
+      const lines = [];
+      (writeback.applied || []).forEach((item) => {
+        lines.push(`${item.name || item.username}：HP 已更新为 ${item.hp}`);
+      });
+      (writeback.skipped || []).forEach((item) => {
+        lines.push(`${item.name || item.username}：未回写（${item.reason}）`);
+      });
+      return lines.join('\n');
+    }
+
+    async function endCombat() {
+      showEndCombatModal();
+    }
+
+    async function confirmEndCombat() {
+      const writebackHp = !!combatWritebackToggle.checked;
+      hideEndCombatModal();
+      const { data } = await api('/api/combat/end', {
+        method: 'POST',
+        body: JSON.stringify({ writeback_hp: writebackHp }),
+      });
+      if (!data.ok) {
+        alert(data.error || '结束失败');
+        return;
+      }
+      combatState = null;
+      updateCombatButton();
+      stopCombatPolling();
+      renderCombatPanel({ can_manage: true, can_view: true, maps: MAP_LOCATIONS, room_players: combatRoomPlayers });
+      if (writebackHp && data.writeback) {
+        const message = formatCombatWritebackMessage(data.writeback);
+        if (message) {
+          alert(`战斗已结束\n\n${message}`);
+        } else {
+          alert('战斗已结束 · 没有可回写的参战玩家');
+        }
+      }
     }
 
     function showCharacterView() {
       appPanel.classList.add('hidden');
       playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       charPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
     }
@@ -583,6 +3750,11 @@
     function showPlayersView() {
       appPanel.classList.add('hidden');
       charPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       playersPanel.classList.remove('hidden');
       cardEl.classList.add('sheet-mode');
     }
@@ -590,10 +3762,121 @@
     function showDiceView() {
       charPanel.classList.add('hidden');
       playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.add('hidden');
       appPanel.classList.remove('hidden');
       cardEl.classList.remove('sheet-mode');
       charViewSource = 'dice';
       viewingTarget = null;
+    }
+
+    function showNpcView() {
+      appPanel.classList.add('hidden');
+      charPanel.classList.add('hidden');
+      playersPanel.classList.add('hidden');
+      combatPanel.classList.add('hidden');
+      scenePanel.classList.add('hidden');
+      timelinePanel.classList.add('hidden');
+      handoutPanel.classList.add('hidden');
+      npcPanel.classList.remove('hidden');
+      cardEl.classList.add('sheet-mode');
+    }
+
+    function renderNpcCheckRow(label, value) {
+      return `<div class="npc-check-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+    }
+
+    function renderNpcCard(npc) {
+      const attrsHtml = (npc.attributes || [])
+        .map((attr) => renderNpcCheckRow(attr.label, attr.value))
+        .join('');
+      const skillsHtml = (npc.skills || [])
+        .map((skill) => renderNpcCheckRow(skill.name, skill.value))
+        .join('');
+      const portraitImg = npc.portrait
+        ? `<img class="npc-card-portrait" src="/assets/${escapeHtml(npc.portrait)}" alt="${escapeHtml(npc.name)} 头像">`
+        : '';
+      return `
+        <div class="npc-card" data-npc-id="${escapeHtml(npc.id)}">
+          <div class="npc-card-head">
+            ${portraitImg}
+            <div class="npc-card-head-info">
+              <div class="npc-card-name">${escapeHtml(npc.name)}</div>
+              <div class="npc-card-occ">${escapeHtml(npc.occupation || '')}</div>
+            </div>
+            <button type="button" class="btn-small npc-delete-btn" data-npc-id="${escapeHtml(npc.id)}">删除</button>
+          </div>
+          <div class="npc-card-stats">HP ${escapeHtml(npc.hp)}/${escapeHtml(npc.hp_max)} · SAN ${escapeHtml(npc.san)}/${escapeHtml(npc.san_max)} · MP ${escapeHtml(npc.mp)}</div>
+          <div class="npc-card-desc">${escapeHtml(npc.description || '')}</div>
+          <div class="npc-card-personality">${escapeHtml(npc.personality || '')}</div>
+          <div class="npc-card-section-label">基础属性</div>
+          <div class="npc-check-grid">${attrsHtml}</div>
+          <div class="npc-card-section-label">技能</div>
+          <div class="npc-check-grid">${skillsHtml}</div>
+        </div>
+      `;
+    }
+
+    async function loadNpcList() {
+      npcList.innerHTML = '<div class="handout-empty">加载中…</div>';
+      const { data } = await api('/api/room/npcs');
+      if (!data.ok) {
+        npcList.innerHTML = `<div class="handout-empty">${escapeHtml(data.error || '加载失败')}</div>`;
+        return;
+      }
+      if (!data.npcs.length) {
+        npcList.innerHTML = '<div class="handout-empty">尚未生成 NPC</div>';
+        return;
+      }
+      npcList.innerHTML = data.npcs
+        .slice()
+        .reverse()
+        .map(renderNpcCard)
+        .join('');
+      npcList.querySelectorAll('.npc-delete-btn').forEach((btn) => {
+        btn.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          const npcId = Number(btn.dataset.npcId);
+          const { data: delData } = await api('/api/room/npc/delete', {
+            method: 'POST',
+            body: JSON.stringify({ id: npcId }),
+          });
+          if (!delData.ok) {
+            alert(delData.error || '删除失败');
+            return;
+          }
+          loadNpcList();
+        });
+      });
+    }
+
+    async function generateNpc() {
+      npcFormError.textContent = '';
+      const name = npcNameInput.value.trim();
+      const description = npcDescInput.value.trim();
+      if (!description) {
+        npcFormError.textContent = '请输入 NPC 描述';
+        return;
+      }
+      npcGenerateBtn.disabled = true;
+      try {
+        const { data } = await api('/api/room/npc/generate', {
+          method: 'POST',
+          body: JSON.stringify({ name, description }),
+        });
+        if (!data.ok) {
+          npcFormError.textContent = data.error || '生成失败';
+          return;
+        }
+        npcNameInput.value = '';
+        npcDescInput.value = '';
+        loadNpcList();
+      } finally {
+        npcGenerateBtn.disabled = false;
+      }
     }
 
     function escapeHtml(text) {
@@ -602,6 +3885,20 @@
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+    }
+
+    function formatStatCurrentMax(current, max) {
+      if (current == null && max == null) return '—';
+      const cur = current ?? '—';
+      const mx = max ?? '—';
+      return `${cur}/${mx}`;
+    }
+
+    function hpSanFromStatus(status = {}) {
+      return {
+        hpText: formatStatCurrentMax(status.hp, status.hp_max ?? status.hp),
+        sanText: formatStatCurrentMax(status.san, status.san_max ?? 99),
+      };
     }
 
     function infoRows(rows) {
@@ -615,10 +3912,10 @@
     }
 
     function renderKpControls() {
-      if (!canEditStatus || !viewingTarget) return '';
+      if (!canEditStatus || !viewingPcId) return '';
       return `
         <div class="kp-controls" id="kpControls">
-          <div class="kp-controls-title">KP 状态调整 · ${escapeHtml(viewingTarget)}</div>
+          <div class="kp-controls-title">KP 状态调整 · PC ${escapeHtml(viewingTarget || viewingPcId)}</div>
           <div class="kp-stat-row">
             <span class="kp-stat-label">HP</span>
             <button type="button" class="kp-adjust-btn minus" data-stat="hp" data-delta="-1">-1</button>
@@ -636,11 +3933,12 @@
     }
 
     function bindKpControls(c) {
-      if (!canEditStatus || !viewingTarget) return;
+      if (!canEditStatus || !viewingPcId) return;
       const hpEl = document.getElementById('kpHpValue');
       const sanEl = document.getElementById('kpSanValue');
-      if (hpEl) hpEl.textContent = c.status?.hp ?? '—';
-      if (sanEl) sanEl.textContent = c.status?.san ?? '—';
+      const { hpText, sanText } = hpSanFromStatus(c.status);
+      if (hpEl) hpEl.textContent = hpText;
+      if (sanEl) sanEl.textContent = sanText;
 
       document.querySelectorAll('.kp-adjust-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -650,8 +3948,8 @@
     }
 
     async function adjustCharacterStatus(stat, delta) {
-      if (!viewingTarget || !canEditStatus) return;
-      const payload = { target: viewingTarget, hp_delta: 0, san_delta: 0 };
+      if (!viewingPcId || !canEditStatus) return;
+      const payload = { target: viewingPcId, hp_delta: 0, san_delta: 0 };
       if (stat === 'hp') payload.hp_delta = delta;
       if (stat === 'san') payload.san_delta = delta;
 
@@ -667,17 +3965,19 @@
 
       const hpEl = document.getElementById('kpHpValue');
       const sanEl = document.getElementById('kpSanValue');
-      if (hpEl) hpEl.textContent = data.status.hp ?? '—';
-      if (sanEl) sanEl.textContent = data.status.san ?? '—';
+      const { hpText, sanText } = hpSanFromStatus(data.status);
+      if (hpEl) hpEl.textContent = hpText;
+      if (sanEl) sanEl.textContent = sanText;
 
       const nums = document.querySelectorAll('.status-chip .num');
-      if (nums[0]) nums[0].textContent = data.status.hp ?? '—';
-      if (nums[1]) nums[1].textContent = data.status.san ?? '—';
+      if (nums[0]) nums[0].textContent = hpText;
+      if (nums[1]) nums[1].textContent = sanText;
     }
 
     function renderCharacterSheet(c) {
       const p = c.profile;
       const s = c.status;
+      const { hpText, sanText } = hpSanFromStatus(s);
       const attrs = (c.attributes || [])
         .map(
           (a) => `<div class="attr-item"><div class="key">${escapeHtml(a.key)} ${escapeHtml(a.label)}</div><div class="val">${escapeHtml(a.value ?? '—')}</div><div class="half">1/2 · ${escapeHtml(a.half ?? '—')}</div></div>`
@@ -705,21 +4005,33 @@
         .map((b) => `<div class="bg-item"><div class="bg-label">${escapeHtml(b.label)}</div><div class="text-block">${escapeHtml(b.value)}</div></div>`)
         .join('');
 
-      charSubtitle.textContent = `${p.name || ''} · ${p.occupation || ''}${viewingTarget ? ` · 账号 ${viewingTarget}` : ''}`;
+      const owner = c.owner || viewingTarget || usernameDisplay.textContent;
+      charSubtitle.textContent = `${p.name || ''} · ${p.occupation || ''} · PL ${owner}${viewingPcId ? ` · PC` : ''}`;
 
-      const sheetUsername = viewingTarget || c.username || usernameDisplay.textContent;
-      const portraitHero = getPcMeta(sheetUsername)
-        ? `<section class="char-portrait-hero">
+      const sheetUsername = c.profile?.name || c.owner || usernameDisplay.textContent;
+      const staticMeta = getPcMeta(sheetUsername);
+      const portraitSrc = staticMeta?.portrait || (c.portrait ? `/assets/${c.portrait}` : null);
+      const canEditPortrait = !!(canEditStatus || owner === usernameDisplay.textContent);
+      const portraitHero = `
+        <section class="char-portrait-hero">
+          ${portraitSrc ? `
             <button type="button" class="char-portrait-hero__btn" data-pc="${escapeHtml(sheetUsername)}" aria-label="查看 ${escapeHtml(p.name || sheetUsername)} 肖像">
-              <img src="${getPcMeta(sheetUsername).portrait}" alt="${escapeHtml(p.name || sheetUsername)} 肖像">
+              <img src="${escapeHtml(portraitSrc)}" alt="${escapeHtml(p.name || sheetUsername)} 肖像">
               <span class="char-portrait-hero__shine" aria-hidden="true"></span>
             </button>
             <div class="char-portrait-hero__meta">
-              <div class="char-portrait-hero__name">${escapeHtml(p.name || getPcMeta(sheetUsername).displayName)}</div>
-              <div class="char-portrait-hero__occ">${escapeHtml(p.occupation || getPcMeta(sheetUsername).occupation)}</div>
+              <div class="char-portrait-hero__name">${escapeHtml(p.name || staticMeta?.displayName || sheetUsername)}</div>
+              <div class="char-portrait-hero__occ">${escapeHtml(p.occupation || staticMeta?.occupation || '')}</div>
             </div>
-          </section>`
-        : '';
+          ` : '<div class="char-portrait-hero__placeholder">尚无头像</div>'}
+          ${canEditPortrait ? `
+            <div class="char-portrait-gen">
+              <textarea id="charPortraitDescInput" class="handout-textarea" maxlength="${PORTRAIT_DESCRIPTION_MAX}" placeholder="描述外貌用于生成头像，例如：戴圆框眼镜的中年学者，蓄着灰白胡须"></textarea>
+              <button type="button" id="charPortraitGenBtn" class="handout-submit-btn">${portraitSrc ? '重新生成头像' : '生成头像'}</button>
+              <div id="charPortraitGenError" class="handout-form-error"></div>
+            </div>
+          ` : ''}
+        </section>`;
 
       charContent.innerHTML = `
         ${renderKpControls()}
@@ -741,8 +4053,8 @@
         <section class="char-section">
           <h2>状态</h2>
           <div class="status-grid">
-            <div class="status-chip"><span class="num">${escapeHtml(s.hp ?? '—')}</span><span class="label">HP ${escapeHtml(s.hp_state || '')}</span></div>
-            <div class="status-chip"><span class="num">${escapeHtml(s.san ?? '—')}</span><span class="label">SAN ${escapeHtml(s.san_state || '')}</span></div>
+            <div class="status-chip"><span class="num">${escapeHtml(hpText)}</span><span class="label">HP 当前/最大 ${escapeHtml(s.hp_state || '')}</span></div>
+            <div class="status-chip"><span class="num">${escapeHtml(sanText)}</span><span class="label">SAN 当前/最大 ${escapeHtml(s.san_state || '')}</span></div>
             <div class="status-chip"><span class="num">${escapeHtml(s.mp ?? '—')}</span><span class="label">MP</span></div>
             <div class="status-chip"><span class="num">${escapeHtml(s.mov ?? '—')}</span><span class="label">MOV</span></div>
           </div>
@@ -777,18 +4089,55 @@
       bindKpControls(c);
 
       charContent.querySelector('.char-portrait-hero__btn')?.addEventListener('click', () => {
-        openPortraitModal(sheetUsername, p);
+        showPortraitModal({
+          portrait: portraitSrc,
+          name: p.name || staticMeta?.displayName || sheetUsername,
+          subtitle: p.occupation || staticMeta?.occupation || '',
+        });
+      });
+
+      document.getElementById('charPortraitGenBtn')?.addEventListener('click', async () => {
+        const btn = document.getElementById('charPortraitGenBtn');
+        const descInput = document.getElementById('charPortraitDescInput');
+        const errorEl = document.getElementById('charPortraitGenError');
+        const description = descInput?.value.trim() || '';
+        if (!description) {
+          errorEl.textContent = '请输入外貌描述';
+          return;
+        }
+        btn.disabled = true;
+        errorEl.textContent = '';
+        try {
+          const payload = { description };
+          if (viewingPcId) payload.target = viewingPcId;
+          const { data } = await api('/api/character/portrait', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          if (!data.ok) {
+            errorEl.textContent = data.error || '生成失败';
+            return;
+          }
+          const refreshed = await fetchCharacter(viewingPcId);
+          if (refreshed.data.ok) {
+            currentCharacter = refreshed.data.character;
+            renderCharacterSheet(currentCharacter);
+          }
+        } finally {
+          btn.disabled = false;
+        }
       });
     }
 
-    async function fetchCharacter(target) {
-      const url = target ? `/api/character?target=${encodeURIComponent(target)}` : '/api/character';
+    async function fetchCharacter(pcId) {
+      const url = pcId ? `/api/character?target=${encodeURIComponent(pcId)}` : '/api/character';
       return api(url);
     }
 
     async function openCharacterSheet() {
       charViewSource = 'dice';
       viewingTarget = null;
+      viewingPcId = null;
       canEditStatus = false;
       showCharacterView();
       charBackBtn.textContent = '返回投骰';
@@ -833,23 +4182,24 @@
         btn.className = 'player-card-btn';
         btn.innerHTML = `
           <div class="player-card-name">${escapeHtml(player.name)}</div>
-          <div class="player-card-meta">账号：${escapeHtml(player.username)} · ${escapeHtml(player.occupation || '未知职业')}</div>
-          <div class="player-card-stats">HP ${escapeHtml(player.hp ?? '—')} · SAN ${escapeHtml(player.san ?? '—')}</div>
+          <div class="player-card-meta">PL：${escapeHtml(player.owner || player.pl_username || player.username)} · PC：${escapeHtml(player.name)} · ${escapeHtml(player.occupation || '未知职业')}</div>
+          <div class="player-card-stats">HP ${escapeHtml(formatStatCurrentMax(player.hp, player.hp_max ?? player.hp))} · SAN ${escapeHtml(formatStatCurrentMax(player.san, player.san_max ?? 99))}</div>
         `;
-        btn.addEventListener('click', () => openPlayerCharacter(player.username));
+        btn.addEventListener('click', () => openPlayerCharacter(player.pc_id, player.owner || player.username, player.name));
         list.appendChild(btn);
       });
       playersContent.replaceChildren(list);
     }
 
-    async function openPlayerCharacter(username) {
+    async function openPlayerCharacter(pcId, owner, pcName) {
       charViewSource = 'players';
-      viewingTarget = username;
+      viewingTarget = owner || null;
+      viewingPcId = pcId;
       showCharacterView();
       charBackBtn.textContent = '返回列表';
       charContent.innerHTML = '<div class="char-loading">加载人物卡…</div>';
 
-      const { data } = await fetchCharacter(username);
+      const { data } = await fetchCharacter(pcId);
       if (!data.ok) {
         charContent.innerHTML = `<div class="char-error">${escapeHtml(data.error || '加载失败')}</div>`;
         return;
@@ -872,7 +4222,7 @@
       const quarter = Math.floor(skillValue / 4);
       let type = 'fail';
 
-      if (roll >= 95) {
+      if (roll >= 96) {
         type = 'crit_fail';
       } else if (roll <= 5) {
         type = 'crit_success';
@@ -946,7 +4296,7 @@
       }
     }
 
-    async function performD100Check(name, value) {
+    async function performD100Check(name, value, rollType = 'skill') {
       if (skillCheckBusy || value == null) return;
       skillCheckBusy = true;
       disableCheckButtons(true);
@@ -960,8 +4310,31 @@
         await new Promise((resolve) => setTimeout(resolve, 45));
       }
 
-      const roll = rollDie('d100');
-      const outcome = evaluateSkillCheck(roll, value);
+      let roll;
+      let outcome;
+      if (currentRoom) {
+        const serverRoll = await submitRoomRoll({
+          type: rollType,
+          dice: 'd100',
+          label: name,
+          skill_value: value,
+          hidden: isSecretRollEnabled(),
+        });
+        if (!serverRoll) {
+          closeCheckModal();
+          return;
+        }
+        roll = serverRoll.value;
+        outcome = {
+          type: serverRoll.check_type,
+          skillValue: serverRoll.skill_value,
+          half: Math.floor(serverRoll.skill_value / 2),
+          quarter: Math.floor(serverRoll.skill_value / 4),
+        };
+      } else {
+        roll = rollDie('d100');
+        outcome = evaluateSkillCheck(roll, value);
+      }
       const result = CHECK_RESULTS[outcome.type];
 
       checkRollEl.textContent = roll;
@@ -977,19 +4350,84 @@
       resultsEl.replaceChildren(rolls);
     }
 
+    async function performMonsterSkillCheck(monsterId, skillName, skillValue, monsterName) {
+      if (skillCheckBusy || !monsterId || !skillName) return;
+      skillCheckBusy = true;
+      disableCheckButtons(true);
+      openCheckModal();
+      checkSkillName.textContent = `${monsterName || '怪物'} · ${skillName} · 鉴定 ${skillValue}`;
+
+      const rollStart = Date.now();
+      while (Date.now() - rollStart < 650) {
+        checkRollEl.textContent = Math.floor(Math.random() * 100) + 1;
+        await new Promise((resolve) => setTimeout(resolve, 45));
+      }
+
+      const { data } = await api('/api/combat/skill-roll', {
+        method: 'POST',
+        body: JSON.stringify({ monster_id: monsterId, skill_name: skillName }),
+      });
+      if (!data.ok) {
+        alert(data.error || '检定失败');
+        closeCheckModal();
+        return;
+      }
+
+      const roll = data.roll;
+      const outcome = {
+        type: roll.check_type,
+        skillValue: roll.skill_value,
+        half: Math.floor(roll.skill_value / 2),
+        quarter: Math.floor(roll.skill_value / 4),
+      };
+      const result = CHECK_RESULTS[outcome.type] || CHECK_RESULTS.fail;
+
+      checkRollEl.textContent = roll.value;
+      checkResultEl.className = `check-result ${result.class}`;
+      checkResultEl.textContent = result.label;
+      renderCheckThresholds(outcome, roll.value);
+      playCheckEffects(outcome.type, roll.value);
+
+      combatState = data.combat;
+      renderCombatPanel({
+        combat: data.combat,
+        can_manage: true,
+        can_view: true,
+        maps: MAP_LOCATIONS,
+        room_players: combatRoomPlayers,
+        monster_templates: monsterTemplates,
+      });
+    }
+
     async function performSkillCheck(skill) {
       await performD100Check(skill.name, skill.value);
     }
 
     async function performAttributeCheck(attr) {
       const name = attr.label || attr.key;
-      await performD100Check(name, Number(attr.value));
+      await performD100Check(name, Number(attr.value), 'attr');
+    }
+
+    async function afterLogin(data) {
+      currentUserRole = data.role || 'player';
+      activePcId = data.active_pc_id || null;
+      activePcSummary = data.active_pc || null;
+      updatePcBadge();
+      if (currentUserRole === 'player' && data.needs_pc_selection) {
+        showPcSelectPanel(data.username);
+        return;
+      }
+      if (data.room) {
+        enterRoom(data.room, data.username, data.role);
+      } else {
+        showRoomLobby(data.username, data.role);
+      }
     }
 
     async function checkAuth() {
       const { data } = await api('/api/me');
       if (data.logged_in) {
-        showApp(data.username, data.role);
+        await afterLogin(data);
       } else {
         showAuth();
       }
@@ -1010,9 +4448,13 @@
       authError.textContent = '';
 
       const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+      const payload = { username };
+      if (authMode === 'register') {
+        payload.role = document.querySelector('input[name="registerRole"]:checked')?.value || 'player';
+      }
       const { res, data } = await api(endpoint, {
         method: 'POST',
-        body: JSON.stringify({ username }),
+        body: JSON.stringify(payload),
       });
 
       authSubmitBtn.disabled = false;
@@ -1022,24 +4464,104 @@
         return;
       }
 
-      showApp(data.username, data.role);
+      await afterLogin(data);
     });
 
     usernameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') authSubmitBtn.click();
     });
 
+    roomCreateBtn.addEventListener('click', createRoom);
+    roomNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') roomCreateBtn.click();
+    });
+    roomLogoutBtn.addEventListener('click', async () => {
+      await api('/api/logout', { method: 'POST', body: '{}' });
+      showAuth();
+    });
+    pcLogoutBtn.addEventListener('click', async () => {
+      await api('/api/logout', { method: 'POST', body: '{}' });
+      showAuth();
+    });
+    pcUploadBtn.addEventListener('click', uploadPcFile);
+    switchPcBtn.addEventListener('click', () => {
+      showPcSelectPanel(usernameDisplay.textContent, true);
+    });
+    leaveRoomBtn.addEventListener('click', leaveRoom);
+    deleteRoomBtn.addEventListener('click', () => {
+      if (!currentRoom) return;
+      showDeleteRoomModal(currentRoom.id, currentRoom.name);
+    });
+    roomDeleteCancelBtn.addEventListener('click', hideDeleteRoomModal);
+    roomDeleteBackdrop.addEventListener('click', hideDeleteRoomModal);
+    roomDeleteConfirmBtn.addEventListener('click', confirmDeleteRoom);
+
     logoutBtn.addEventListener('click', async () => {
+      stopRollPolling();
+      stopCombatPolling();
+      stopScenePolling();
+      stopTimelinePolling();
+      stopHandoutPolling();
+      await api('/api/room/leave', { method: 'POST', body: '{}' }).catch(() => {});
       await api('/api/logout', { method: 'POST', body: '{}' });
       showAuth();
     });
 
     charBtn.addEventListener('click', openCharacterSheet);
+    combatBtn.addEventListener('click', showCombatView);
+    combatEntryBtn.addEventListener('click', showCombatView);
+    combatBackBtn.addEventListener('click', showDiceView);
+    sceneBtn.addEventListener('click', showSceneView);
+    sceneEntryBtn.addEventListener('click', showSceneView);
+    sceneBackBtn.addEventListener('click', showDiceView);
+    timelineBtn.addEventListener('click', showTimelineView);
+    timelineEntryBtn.addEventListener('click', showTimelineView);
+    timelineBackBtn.addEventListener('click', showDiceView);
+    timelineSubmitBtn.addEventListener('click', submitTimelineEntry);
+    timelineCancelEditBtn.addEventListener('click', resetTimelineForm);
+    handoutBtn.addEventListener('click', showHandoutView);
+    handoutBackBtn.addEventListener('click', showDiceView);
+    npcBtn.addEventListener('click', () => {
+      showNpcView();
+      loadNpcList();
+    });
+    npcBackBtn.addEventListener('click', showDiceView);
+    npcGenerateBtn.addEventListener('click', generateNpc);
+    handoutSubmitBtn.addEventListener('click', submitHandout);
+    handoutTargetAll.addEventListener('change', () => {
+      const disabled = handoutTargetAll.checked;
+      handoutTargetList.querySelectorAll('.handout-target-checkbox').forEach((input) => {
+        input.disabled = disabled;
+        if (disabled) input.checked = false;
+      });
+    });
+    handoutImageInput.addEventListener('change', () => {
+      pendingHandoutImageFile = handoutImageInput.files?.[0] || null;
+    });
+    handoutDetailCloseBtn.addEventListener('click', closeHandoutDetail);
+    handoutDetailBackdrop.addEventListener('click', closeHandoutDetail);
+    sceneFileInput.addEventListener('change', async () => {
+      const file = sceneFileInput.files?.[0];
+      sceneFileInput.value = '';
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('图片过大，请上传 5MB 以内的场景图');
+        return;
+      }
+      try {
+        await uploadSceneImage(file);
+      } catch {
+        alert('读取图片失败');
+      }
+    });
     playersBtn.addEventListener('click', openPlayersPanel);
     charBackBtn.addEventListener('click', handleCharBack);
     playersBackBtn.addEventListener('click', showDiceView);
     checkCloseBtn.addEventListener('click', closeCheckModal);
     checkBackdrop.addEventListener('click', closeCheckModal);
+    combatEndCancelBtn.addEventListener('click', hideEndCombatModal);
+    combatEndBackdrop.addEventListener('click', hideEndCombatModal);
+    combatEndConfirmBtn.addEventListener('click', confirmEndCombat);
 
     mapSelect.addEventListener('change', () => {
       const username = usernameDisplay.textContent;
@@ -1210,7 +4732,165 @@
       resultsEl.replaceChildren(rolls);
     }
 
-    function handleSimpleRoll(diceKey) {
+    let opposedPlayersCache = [];
+
+    async function ensureOpposedPlayers() {
+      if (opposedPlayersCache.length) return opposedPlayersCache;
+      const { data } = await api('/api/players');
+      if (data.ok && data.players) opposedPlayersCache = data.players;
+      return opposedPlayersCache;
+    }
+
+    async function populateOpposedPcOptions(side) {
+      const els = opposedSideEls[side];
+      const players = await ensureOpposedPlayers();
+      els.pc.innerHTML = players.length
+        ? players
+            .map((p) => `<option value="${escapeHtml(p.pc_id)}">${escapeHtml(p.name)}（${escapeHtml(p.owner || p.username || '')}）</option>`)
+            .join('')
+        : '<option value="">暂无玩家</option>';
+    }
+
+    async function populateOpposedMonsterOptions(side) {
+      const els = opposedSideEls[side];
+      const templates = await ensureMonsterTemplates();
+      els.monster.innerHTML = templates.length
+        ? templates.map((t) => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('')
+        : '<option value="">暂无怪物</option>';
+    }
+
+    async function populateOpposedSkillsFromPc(side) {
+      const els = opposedSideEls[side];
+      const pcId = els.pc.value;
+      if (!pcId) {
+        els.skill.innerHTML = '<option value="">暂无技能</option>';
+        return;
+      }
+      els.skill.innerHTML = '<option value="">加载技能中…</option>';
+      const { data } = await fetchCharacter(pcId);
+      if (!data.ok) {
+        els.skill.innerHTML = '<option value="">加载失败</option>';
+        return;
+      }
+      const skills = data.character?.skills || [];
+      els.skill.innerHTML = skills.length
+        ? skills
+            .slice()
+            .sort((a, b) => (b.value || 0) - (a.value || 0))
+            .map((s) => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)} (${escapeHtml(s.value)})</option>`)
+            .join('')
+        : '<option value="">暂无技能</option>';
+    }
+
+    function populateOpposedSkillsFromMonster(side) {
+      const els = opposedSideEls[side];
+      const templateId = els.monster.value;
+      const template = monsterTemplates.find((t) => t.id === templateId);
+      const skills = template?.skills || [];
+      els.skill.innerHTML = skills.length
+        ? skills.map((s) => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)} (${escapeHtml(s.value)})</option>`).join('')
+        : '<option value="">暂无技能</option>';
+    }
+
+    function populateOpposedTypeFields(side) {
+      const els = opposedSideEls[side];
+      const type = els.type.value;
+      els.pc.classList.toggle('hidden', type !== 'player');
+      els.monster.classList.toggle('hidden', type !== 'monster');
+      els.skill.classList.toggle('hidden', type === 'custom');
+      els.customLabel.classList.toggle('hidden', type !== 'custom');
+      els.customValue.classList.toggle('hidden', type !== 'custom');
+      if (type === 'player') {
+        populateOpposedSkillsFromPc(side);
+      } else if (type === 'monster') {
+        populateOpposedSkillsFromMonster(side);
+      } else {
+        els.skill.innerHTML = '';
+      }
+    }
+
+    async function openOpposedRollForm() {
+      opposedRollError.textContent = '';
+      const willShow = opposedRollForm.classList.contains('hidden');
+      opposedRollForm.classList.toggle('hidden');
+      if (!willShow) return;
+      await Promise.all([
+        populateOpposedPcOptions('a'),
+        populateOpposedPcOptions('b'),
+        populateOpposedMonsterOptions('a'),
+        populateOpposedMonsterOptions('b'),
+      ]);
+      populateOpposedTypeFields('a');
+      populateOpposedTypeFields('b');
+    }
+
+    function buildOpposedSidePayload(side) {
+      const els = opposedSideEls[side];
+      const type = els.type.value;
+      if (type === 'player') {
+        return { type: 'player', pc_id: els.pc.value, skill_name: els.skill.value };
+      }
+      if (type === 'monster') {
+        return { type: 'monster', template_id: els.monster.value, skill_name: els.skill.value };
+      }
+      return {
+        type: 'custom',
+        label: els.customLabel.value.trim(),
+        skill_value: Number(els.customValue.value),
+      };
+    }
+
+    async function submitOpposedRoll() {
+      opposedRollError.textContent = '';
+      const payload = {
+        side_a: buildOpposedSidePayload('a'),
+        side_b: buildOpposedSidePayload('b'),
+      };
+      opposedRollSubmitBtn.disabled = true;
+      try {
+        const { data } = await api('/api/room/opposed', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!data.ok) {
+          opposedRollError.textContent = data.error || '对抗检定失败';
+          return;
+        }
+        const empty = rollLogContent.querySelector('.roll-log-empty');
+        if (empty) empty.remove();
+        appendRollToLog(data.side_b, true);
+        appendRollToLog(data.side_a, true);
+        lastRollId = Math.max(lastRollId, data.side_a.id, data.side_b.id);
+        opposedRollForm.classList.add('hidden');
+      } finally {
+        opposedRollSubmitBtn.disabled = false;
+      }
+    }
+
+    opposedRollToggleBtn.addEventListener('click', () => {
+      openOpposedRollForm();
+    });
+
+    Object.entries(opposedSideEls).forEach(([side, els]) => {
+      els.type.addEventListener('change', () => populateOpposedTypeFields(side));
+      els.pc.addEventListener('change', () => populateOpposedSkillsFromPc(side));
+      els.monster.addEventListener('change', () => populateOpposedSkillsFromMonster(side));
+    });
+
+    opposedRollSubmitBtn.addEventListener('click', submitOpposedRoll);
+
+    async function handleSimpleRoll(diceKey) {
+      if (currentRoom) {
+        const serverRoll = await submitRoomRoll({
+          type: 'free',
+          dice: diceKey,
+          label: DICE[diceKey].label,
+          hidden: isSecretRollEnabled(),
+        });
+        if (!serverRoll) return;
+        showSingleRoll(diceKey, serverRoll.value);
+        return;
+      }
       const result = rollDie(diceKey);
       showSingleRoll(diceKey, result);
     }

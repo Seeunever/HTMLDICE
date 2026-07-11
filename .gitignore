@@ -6,3 +6,13 @@ __pycache__/
 *.pem
 .DS_Store
 Thumbs.db
+assets/scenes/*
+!assets/scenes/.gitkeep
+assets/handouts/*
+!assets/handouts/.gitkeep
+assets/portraits_gen/*
+!assets/portraits_gen/.gitkeep
+users.json
+characters.json
+rooms.json
+assets/scene_test_map.png
